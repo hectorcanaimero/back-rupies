@@ -34,3 +34,19 @@ export function getUserStatus(user: { ban?: boolean | null; status?: boolean | n
   if (user.status === false) return "inactive";
   return "active";
 }
+
+export const SUBSCRIPTION_STATUS = {
+  active: { label: "Ativo", color: "bg-green-500/20 text-green-400" },
+  trialing: { label: "Trial", color: "bg-blue-500/20 text-blue-400" },
+  past_due: { label: "Inadimplente", color: "bg-orange-500/20 text-orange-400" },
+  cancelled: { label: "Cancelado", color: "bg-red-500/20 text-red-400" },
+  incomplete: { label: "Incompleto", color: "bg-yellow-500/20 text-yellow-400" },
+} as const;
+
+export const BILLING_CYCLES = {
+  monthly: { label: "Mensal" },
+  yearly: { label: "Anual" },
+} as const;
+
+export type SubscriptionStatus = keyof typeof SUBSCRIPTION_STATUS;
+export type BillingCycle = keyof typeof BILLING_CYCLES;

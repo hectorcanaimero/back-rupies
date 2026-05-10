@@ -19,11 +19,10 @@ export function formatCPFCNPJ(value: string | null | undefined): string {
  * Format to BRL currency: R$ 1.234,56
  */
 export function formatCurrency(value: number | null | undefined): string {
-  if (value == null) return "R$ 0,00";
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(value);
+  }).format(value ?? 0);
 }
 
 /**
@@ -83,4 +82,28 @@ export function formatRelativeTime(value: string | null | undefined): string {
   if (diffHours < 24) return `há ${diffHours}h`;
   if (diffDays < 30) return `há ${diffDays}d`;
   return formatDate(value);
+}
+
+/**
+ * Format billing cycle: monthly → "Mensal", yearly → "Anual"
+ */
+export function formatBillingCycle(value: string | null | undefined): string {
+  if (!value) return "—";
+  if (value === "monthly") return "Mensal";
+  if (value === "yearly") return "Anual";
+  return value;
+}
+
+/**
+ * Format credit balance: 23/50 créditos or "Ilimitado"
+ */
+export function formatCredits(
+  used: number | null | undefined,
+  granted: number | null | undefined,
+  isUnlimited: boolean | null | undefined
+): string {
+  if (isUnlimited) return "Ilimitado";
+  const u = used ?? 0;
+  const g = granted ?? 0;
+  return `${u}/${g}`;
 }

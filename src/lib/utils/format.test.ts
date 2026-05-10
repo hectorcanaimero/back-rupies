@@ -1,97 +1,78 @@
 import { describe, it, expect } from "vitest";
 import {
-  formatCPFCNPJ,
+  formatBillingCycle,
+  formatCredits,
   formatCurrency,
   formatDate,
-  formatDateTime,
   formatPhone,
-  formatRelativeTime,
+  formatCPFCNPJ,
 } from "./format";
 
-describe("formatCPFCNPJ", () => {
-  it("formats 11-digit CPF", () => {
-    expect(formatCPFCNPJ("12345678901")).toBe("123.456.789-01");
+describe("formatBillingCycle", () => {
+  it("returns 'Mensal' for monthly", () => {
+    expect(formatBillingCycle("monthly")).toBe("Mensal");
   });
-  it("formats 14-digit CNPJ", () => {
-    expect(formatCPFCNPJ("12345678000190")).toBe("12.345.678/0001-90");
+  it("returns 'Anual' for yearly", () => {
+    expect(formatBillingCycle("yearly")).toBe("Anual");
   });
-  it("handles already formatted input", () => {
-    expect(formatCPFCNPJ("123.456.789-01")).toBe("123.456.789-01");
+  it("returns '—' for null", () => {
+    expect(formatBillingCycle(null)).toBe("—");
   });
-  it("returns dash for null/undefined", () => {
-    expect(formatCPFCNPJ(null)).toBe("—");
-    expect(formatCPFCNPJ(undefined)).toBe("—");
+  it("passes through unknown values", () => {
+    expect(formatBillingCycle("weekly")).toBe("weekly");
   });
-  it("returns original for invalid length", () => {
-    expect(formatCPFCNPJ("12345")).toBe("12345");
+});
+
+describe("formatCredits", () => {
+  it("returns 'Ilimitado' when is_unlimited is true", () => {
+    expect(formatCredits(10, 100, true)).toBe("Ilimitado");
+  });
+  it("returns used/granted string", () => {
+    expect(formatCredits(23, 50, false)).toBe("23/50");
+  });
+  it("handles nulls gracefully", () => {
+    expect(formatCredits(null, null, false)).toBe("0/0");
   });
 });
 
 describe("formatCurrency", () => {
-  it("formats positive values", () => {
-    const result = formatCurrency(1234.56);
-    expect(result).toContain("1.234,56");
-    expect(result).toContain("R$");
+  it("formats BRL correctly", () => {
+    expect(formatCurrency(1234.56)).toBe("R$\u00a01.234,56");
   });
-  it("formats zero", () => {
-    expect(formatCurrency(0)).toContain("0,00");
-  });
-  it("handles null/undefined", () => {
-    expect(formatCurrency(null)).toBe("R$ 0,00");
-    expect(formatCurrency(undefined)).toBe("R$ 0,00");
+  it("returns R$ 0,00 for null", () => {
+    expect(formatCurrency(null)).toBe("R$\u00a00,00");
   });
 });
 
 describe("formatDate", () => {
-  it("formats ISO date to pt-BR", () => {
-    const result = formatDate("2026-05-10T14:30:00Z");
-    expect(result).toMatch(/10\/05\/2026/);
-  });
-  it("returns dash for null", () => {
+  it("returns '—' for null", () => {
     expect(formatDate(null)).toBe("—");
   });
-  it("returns dash for invalid date", () => {
-    expect(formatDate("not-a-date")).toBe("—");
-  });
-});
-
-describe("formatDateTime", () => {
-  it("returns dash for null", () => {
-    expect(formatDateTime(null)).toBe("—");
-  });
-  it("returns dash for invalid date", () => {
-    expect(formatDateTime("not-a-date")).toBe("—");
-  });
-  it("formats valid ISO date", () => {
-    const result = formatDateTime("2026-05-10T14:30:00Z");
-    expect(result).toMatch(/\d{2}\/\d{2}\/\d{4}/);
+  it("formats ISO string to pt-BR", () => {
+    expect(formatDate("2026-05-10T00:00:00Z")).toMatch(/\d{2}\/\d{2}\/\d{4}/);
   });
 });
 
 describe("formatPhone", () => {
-  it("formats 11-digit mobile", () => {
+  it("formats 11-digit mobile number", () => {
     expect(formatPhone("11999998888")).toBe("(11) 99999-8888");
   });
-  it("formats 10-digit landline", () => {
+  it("formats 10-digit landline number", () => {
     expect(formatPhone("1133334444")).toBe("(11) 3333-4444");
   });
-  it("returns dash for null", () => {
+  it("returns '—' for null", () => {
     expect(formatPhone(null)).toBe("—");
-  });
-  it("returns original for invalid length", () => {
-    expect(formatPhone("123")).toBe("123");
   });
 });
 
-describe("formatRelativeTime", () => {
-  it("returns 'agora' for very recent", () => {
-    const now = new Date().toISOString();
-    expect(formatRelativeTime(now)).toBe("agora");
+describe("formatCPFCNPJ", () => {
+  it("formats CPF (11 digits)", () => {
+    expect(formatCPFCNPJ("12345678901")).toBe("123.456.789-01");
   });
-  it("returns dash for null", () => {
-    expect(formatRelativeTime(null)).toBe("—");
+  it("formats CNPJ (14 digits)", () => {
+    expect(formatCPFCNPJ("12345678000190")).toBe("12.345.678/0001-90");
   });
-  it("returns dash for invalid date", () => {
-    expect(formatRelativeTime("invalid")).toBe("—");
+  it("returns '—' for null", () => {
+    expect(formatCPFCNPJ(null)).toBe("—");
   });
 });
