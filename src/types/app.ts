@@ -41,3 +41,25 @@ export interface SubscriptionUsage {
   candidates_received: number | null;
   updated_at: string | null;
 }
+
+export type Lead = Database["public"]["Tables"]["leads"]["Row"];
+export type LeadContact = Database["public"]["Tables"]["lead_contact"]["Row"];
+export type LeadAttachment = Database["public"]["Tables"]["lead_attachment"]["Row"];
+export type Chat = Database["public"]["Tables"]["chats"]["Row"];
+export type ChatMessage = Database["public"]["Tables"]["chats_message"]["Row"];
+export type Banner = Database["public"]["Tables"]["banners"]["Row"];
+export type Sac = Database["public"]["Tables"]["sacs"]["Row"];
+export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+export type Setting = Database["public"]["Tables"]["settings"]["Row"];
+
+// Lead with joined user (empresa)
+export interface LeadWithUser extends Lead {
+  users: Pick<User, "id" | "display_name" | "email"> | null;
+}
+
+// Chat with joined participants and service/lead info
+export interface ChatWithRelations extends Chat {
+  userA: Pick<User, "id" | "display_name" | "email"> | null;
+  userB: Pick<User, "id" | "display_name" | "email"> | null;
+  services: Pick<Service, "id" | "name"> | null;
+}

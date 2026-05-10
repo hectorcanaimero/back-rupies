@@ -195,6 +195,137 @@ export interface Database {
         Insert: { [key: string]: Json | undefined };
         Update: { [key: string]: Json | undefined };
       };
+      leads: {
+        Row: {
+          id: string;
+          userId: string | null;
+          name: string | null;
+          description: string | null;
+          type_supplier: string | null;
+          budget: number | null;
+          quantity: number | null;
+          return_deadline: string | null;
+          finished: boolean | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
+      lead_contact: {
+        Row: {
+          id: string;
+          leadId: string | null;
+          userId: string | null;
+          name: string | null;
+          phone: string | null;
+          email: string | null;
+          created_at: string;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
+      lead_attachment: {
+        Row: {
+          id: string;
+          leadId: string | null;
+          url: string | null;
+          name: string | null;
+          type: string | null;
+          created_at: string;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
+      chats: {
+        Row: {
+          id: string;
+          userIdA: string | null;
+          userIdB: string | null;
+          serviceId: string | null;
+          leadId: string | null;
+          last_message: string | null;
+          last_message_at: string | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
+      chats_message: {
+        Row: {
+          id: string;
+          chatId: string | null;
+          senderId: string | null;
+          type: string | null;
+          content: string | null;
+          media_url: string | null;
+          read: boolean | null;
+          created_at: string;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
+      banners: {
+        Row: {
+          id: string;
+          title: string | null;
+          image_url: string | null;
+          link: string | null;
+          order: number | null;
+          active: boolean | null;
+          type: string | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
+      external_banner: {
+        Row: {
+          id: string;
+          bannerId: string | null;
+          external_url: string | null;
+          created_at: string;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
+      sacs: {
+        Row: {
+          id: string;
+          title: string | null;
+          content: string | null;
+          order: number | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
+      notifications: {
+        Row: {
+          id: string;
+          userId: string | null;
+          title: string | null;
+          body: string | null;
+          read: boolean | null;
+          created_at: string;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
+      settings: {
+        Row: {
+          id: string;
+          key: string;
+          value: string | null;
+          description: string | null;
+          updated_at: string | null;
+        };
+        Insert: { [key: string]: Json | undefined };
+        Update: { [key: string]: Json | undefined };
+      };
     };
     Views: {
       [_ in never]: never;

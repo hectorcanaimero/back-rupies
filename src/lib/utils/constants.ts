@@ -50,3 +50,25 @@ export const BILLING_CYCLES = {
 
 export type SubscriptionStatus = keyof typeof SUBSCRIPTION_STATUS;
 export type BillingCycle = keyof typeof BILLING_CYCLES;
+
+export const LEAD_STATUS = {
+  open: { label: "Aberto", color: "bg-blue-500/20 text-blue-400" },
+  finished: { label: "Finalizado", color: "bg-emerald-500/20 text-emerald-400" },
+} as const;
+
+export type LeadStatus = keyof typeof LEAD_STATUS;
+
+export const CHAT_MESSAGE_TYPES = {
+  text: { label: "Texto" },
+  image: { label: "Imagem" },
+  audio: { label: "Áudio" },
+} as const;
+
+export type ChatMessageType = keyof typeof CHAT_MESSAGE_TYPES;
+
+export const BANNER_TYPES = {
+  banner: { label: "Banner" },
+  external: { label: "Externo" },
+} as const;
+
+export type BannerType = keyof typeof BANNER_TYPES;
