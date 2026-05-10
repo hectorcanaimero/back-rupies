@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DataTable } from "@/components/data-table/data-table";
 import { columns } from "./columns";
+import { ExportCsvButton } from "@/components/export-csv-button";
 import type { CreditBalanceWithUser } from "@/types/app";
 
 // ─── Mock data ─────────────────────────────────────────────────────────────────
@@ -110,6 +111,19 @@ export default async function CreditosPage() {
           <h1 className="text-2xl font-bold">Créditos</h1>
           <p className="text-sm text-muted-foreground">{balances.length} registros</p>
         </div>
+        <ExportCsvButton
+          data={balances}
+          filename="creditos"
+          columns={[
+            { key: "id", label: "ID" },
+            { key: "period_start", label: "Período início" },
+            { key: "period_end", label: "Período fim" },
+            { key: "credits_granted", label: "Concedidos" },
+            { key: "credits_used", label: "Usados" },
+            { key: "credits_remaining", label: "Restantes" },
+            { key: "is_unlimited", label: "Ilimitado" },
+          ]}
+        />
       </div>
       <DataTable
         columns={columns}

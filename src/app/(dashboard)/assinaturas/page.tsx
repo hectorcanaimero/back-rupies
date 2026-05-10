@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DataTable } from "@/components/data-table/data-table";
 import { columns } from "./columns";
+import { ExportCsvButton } from "@/components/export-csv-button";
 import type { SubscriptionWithRelations } from "@/types/app";
 
 // ─── Mock data ─────────────────────────────────────────────────────────────────
@@ -143,6 +144,18 @@ export default async function AssinaturasPage() {
             {subscriptions.length} registros
           </p>
         </div>
+        <ExportCsvButton
+          data={subscriptions}
+          filename="assinaturas"
+          columns={[
+            { key: "id", label: "ID" },
+            { key: "status", label: "Status" },
+            { key: "billing_cycle", label: "Ciclo" },
+            { key: "current_period_start", label: "Início" },
+            { key: "current_period_end", label: "Fim" },
+            { key: "created_at", label: "Criado em" },
+          ]}
+        />
       </div>
       <DataTable
         columns={columns}

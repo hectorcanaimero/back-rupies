@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DataTable } from "@/components/data-table/data-table";
 import { columns } from "./columns";
+import { ExportCsvButton } from "@/components/export-csv-button";
 import type { Service } from "@/types/app";
 
 const MOCK_SERVICES: Service[] = [
@@ -146,6 +147,17 @@ export default async function ServicosPage() {
           <h1 className="text-2xl font-bold">Serviços</h1>
           <p className="text-sm text-muted-foreground">{services.length} registros</p>
         </div>
+        <ExportCsvButton
+          data={services}
+          filename="servicos"
+          columns={[
+            { key: "id", label: "ID" },
+            { key: "name", label: "Nome" },
+            { key: "condition", label: "Condição" },
+            { key: "jobType", label: "Tipo" },
+            { key: "created_at", label: "Criado em" },
+          ]}
+        />
       </div>
       <DataTable
         columns={columns}

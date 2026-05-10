@@ -1,7 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { MobileSidebar } from "@/components/layout/mobile-sidebar";
+import { Button } from "@/components/ui/button";
+import { useSidebarStore } from "@/stores/sidebar-store";
 
 const routeLabels: Record<string, string> = {
   "": "Dashboard",
@@ -33,37 +37,52 @@ function getBreadcrumbs(pathname: string): string[] {
 export function Header() {
   const pathname = usePathname();
   const breadcrumbs = getBreadcrumbs(pathname);
+  const { setMobileOpen } = useSidebarStore();
 
   return (
-    <header className="flex items-center justify-between h-14 px-6 border-b border-border bg-card shrink-0">
-      {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <span className="text-foreground font-medium">Rupies</span>
-        {breadcrumbs.map((crumb, i) => (
-          <span key={i} className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">/</span>
-            <span
-              className={
-                i === breadcrumbs.length - 1
-                  ? "text-foreground font-medium"
-                  : "text-muted-foreground"
-              }
-            >
-              {crumb}
-            </span>
-          </span>
-        ))}
-      </nav>
+    <>
+      <MobileSidebar />
+      <header className="flex items-center justify-between h-14 px-4 md:px-6 border-b border-border bg-card shrink-0">
+        <div className="flex items-center gap-3">
+          {/* Hamburger — mobile only */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Abrir menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
 
-      {/* Right actions */}
-      <div className="flex items-center gap-2">
-        <ThemeToggle />
-
-        {/* Admin avatar */}
-        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold select-none">
-          AD
+          {/* Breadcrumbs */}
+          <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <span className="text-foreground font-medium">Rupies</span>
+            {breadcrumbs.map((crumb, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                <span className="text-muted-foreground">/</span>
+                <span
+                  className={
+                    i === breadcrumbs.length - 1
+                      ? "text-foreground font-medium"
+                      : "text-muted-foreground"
+                  }
+                >
+                  {crumb}
+                </span>
+              </span>
+            ))}
+          </nav>
         </div>
-      </div>
-    </header>
+
+        {/* Right actions */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold select-none">
+            AD
+          </div>
+        </div>
+      </header>
+    </>
   );
 }
