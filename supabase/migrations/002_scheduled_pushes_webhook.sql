@@ -1,10 +1,6 @@
 -- Migration: 002_scheduled_pushes_webhook
 -- Replaces the pg_cron job that calls a PL/pgSQL function with one that calls
--- the processing endpoint via HTTP (pg_net).
---
--- REQUIRED Supabase project settings (Dashboard → Settings → Configuration → Custom config):
---   app.settings.app_url       — e.g. https://your-project.vercel.app
---   app.settings.webhook_secret — shared secret validated by the API route
+-- the processing endpoint via HTTP (pg_net) with hardcoded values.
 
 -- Enable pg_net extension
 CREATE EXTENSION IF NOT EXISTS pg_net;
@@ -18,11 +14,8 @@ SELECT cron.schedule(
   '* * * * *',
   $$
     SELECT net.http_post(
-      url     := current_setting('app.settings.app_url') || '/api/push/process-scheduled',
-      headers := jsonb_build_object(
-        'Content-Type',    'application/json',
-        'x-webhook-secret', current_setting('app.settings.webhook_secret')
-      ),
+      url     := 'https://back-rupies.vercel.app/api/push/process-scheduled',
+      headers := '{"Content-Type": "application/json", "x-webhook-secret": "@@v3n3zu3lan0!!"}'::jsonb,
       body    := '{}'::jsonb
     )
   $$
