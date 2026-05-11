@@ -1,5 +1,19 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
+interface ScheduledPush {
+  id: string;
+  title: string;
+  body: string;
+  image_url: string | null;
+  data_payload: Record<string, string> | null;
+  target_type: string;
+  target_value: string | null;
+  target_users: Array<{ id: string; fcmToken: string }> | null;
+  scheduled_at: string;
+  status: string;
+  sent_at: string | null;
+}
+
 // ─── POST /api/push/process-scheduled ────────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -12,7 +26,7 @@ export async function POST(request: Request) {
   const supabase = createAdminClient();
 
   // Fetch pending scheduled pushes (status = 'sent' but not yet dispatched)
-  const { data: pushes, error: fetchError } = await supabase
+  const { data, error: fetchError } = await supabase
     .from("scheduled_pushes")
     .select("*")
     .eq("status", "sent")
@@ -23,7 +37,9 @@ export async function POST(request: Request) {
     return Response.json({ error: fetchError.message }, { status: 500 });
   }
 
-  if (!pushes || pushes.length === 0) {
+  const pushes = (data ?? []) as unknown as ScheduledPush[];
+
+  if (pushes.length === 0) {
     return Response.json({ processed: 0 });
   }
 
@@ -68,7 +84,7 @@ export async function POST(request: Request) {
         const errBody = await fcmRes.text();
         await supabase
           .from("scheduled_pushes")
-          .update({ status: "failed", error_message: errBody })
+          .update({ status: "failed", error_message: errBody } as never)
           .eq("id", push.id);
         continue;
       }
@@ -76,7 +92,7 @@ export async function POST(request: Request) {
       // Mark as dispatched
       await supabase
         .from("scheduled_pushes")
-        .update({ sent_at: new Date().toISOString() })
+        .update({ sent_at: new Date().toISOString() } as never)
         .eq("id", push.id);
 
       processed++;
@@ -85,7 +101,7 @@ export async function POST(request: Request) {
         err instanceof Error ? err.message : "Unknown error";
       await supabase
         .from("scheduled_pushes")
-        .update({ status: "failed", error_message: message })
+        .update({ status: "failed", error_message: message } as never)
         .eq("id", push.id);
     }
   }

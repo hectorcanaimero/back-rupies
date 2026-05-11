@@ -269,27 +269,170 @@ export interface Database {
       banners: {
         Row: {
           id: string;
-          title: string | null;
-          image_url: string | null;
-          link: string | null;
-          order: number | null;
-          active: boolean | null;
-          type: string | null;
+          image: string | null;
+          url: string | null;
+          dateStart: string | null;
+          dateEnd: string | null;
+          status: boolean | null;
+          position: number | null;
+          device: string[] | null;
           created_at: string;
           updated_at: string | null;
         };
-        Insert: { [key: string]: Json | undefined };
-        Update: { [key: string]: Json | undefined };
+        Insert: {
+          id?: string;
+          image?: string | null;
+          url?: string | null;
+          dateStart?: string | null;
+          dateEnd?: string | null;
+          status?: boolean;
+          position?: number;
+          device?: string[];
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          image?: string | null;
+          url?: string | null;
+          dateStart?: string | null;
+          dateEnd?: string | null;
+          status?: boolean;
+          position?: number;
+          device?: string[];
+          updated_at?: string | null;
+        };
       };
       external_banner: {
         Row: {
           id: string;
-          bannerId: string | null;
-          external_url: string | null;
+          image: string | null;
+          url: string | null;
+          text_button: string | null;
+          color_button: string | null;
+          color_text: string | null;
+          start: string | null;
+          end: string | null;
+          status: boolean | null;
+          order: number | null;
           created_at: string;
         };
-        Insert: { [key: string]: Json | undefined };
-        Update: { [key: string]: Json | undefined };
+        Insert: {
+          id?: string;
+          image?: string | null;
+          url?: string | null;
+          text_button?: string | null;
+          color_button?: string | null;
+          color_text?: string | null;
+          start?: string | null;
+          end?: string | null;
+          status?: boolean;
+          order?: number;
+          created_at?: string;
+        };
+        Update: {
+          image?: string | null;
+          url?: string | null;
+          text_button?: string | null;
+          color_button?: string | null;
+          color_text?: string | null;
+          start?: string | null;
+          end?: string | null;
+          status?: boolean;
+          order?: number;
+        };
+      };
+      type_provider: {
+        Row: {
+          id: string;
+          name: string | null;
+          icon: string | null;
+          banner: string | null;
+          order: number | null;
+          url: string | null;
+          status: boolean | null;
+          category: string | null;
+          legado: string | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          name?: string | null;
+          icon?: string | null;
+          banner?: string | null;
+          order?: number;
+          url?: string | null;
+          status?: boolean;
+          category?: string | null;
+          legado?: string | null;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          name?: string | null;
+          icon?: string | null;
+          banner?: string | null;
+          order?: number;
+          url?: string | null;
+          status?: boolean;
+          category?: string | null;
+          legado?: string | null;
+          updated_at?: string | null;
+        };
+      };
+      providers: {
+        Row: {
+          id: string;
+          type: string | null;
+          name: string | null;
+          logo: string | null;
+          banner: string | null;
+          fb: string | null;
+          ig: string | null;
+          wa: string | null;
+          web: string | null;
+          phone: string | null;
+          email: string | null;
+          order: number | null;
+          status: boolean | null;
+          select: string | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          type?: string | null;
+          name?: string | null;
+          logo?: string | null;
+          banner?: string | null;
+          fb?: string | null;
+          ig?: string | null;
+          wa?: string | null;
+          web?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          order?: number;
+          status?: boolean;
+          select?: string | null;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          type?: string | null;
+          name?: string | null;
+          logo?: string | null;
+          banner?: string | null;
+          fb?: string | null;
+          ig?: string | null;
+          wa?: string | null;
+          web?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          order?: number;
+          status?: boolean;
+          select?: string | null;
+          updated_at?: string | null;
+        };
       };
       sacs: {
         Row: {
@@ -325,6 +468,54 @@ export interface Database {
         };
         Insert: { [key: string]: Json | undefined };
         Update: { [key: string]: Json | undefined };
+      };
+      scheduled_pushes: {
+        Row: {
+          id: string;
+          title: string;
+          body: string;
+          image_url: string | null;
+          data_payload: Json | null;
+          target_type: string;
+          target_value: string | null;
+          target_users: Json | null;
+          scheduled_at: string;
+          status: string;
+          error_message: string | null;
+          sent_at: string | null;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          body: string;
+          image_url?: string | null;
+          data_payload?: Json | null;
+          target_type: string;
+          target_value?: string | null;
+          target_users?: Json | null;
+          scheduled_at: string;
+          status?: string;
+          error_message?: string | null;
+          sent_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          title?: string;
+          body?: string;
+          image_url?: string | null;
+          data_payload?: Json | null;
+          target_type?: string;
+          target_value?: string | null;
+          target_users?: Json | null;
+          scheduled_at?: string;
+          status?: string;
+          error_message?: string | null;
+          sent_at?: string | null;
+          created_by?: string | null;
+        };
       };
     };
     Views: {

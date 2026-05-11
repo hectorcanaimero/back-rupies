@@ -22,7 +22,15 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  const users = (data ?? []).map((u) => ({
+  interface UserRow {
+    id: string;
+    display_name: string | null;
+    email: string | null;
+    photo_url: string | null;
+    fcm_token: string | null;
+  }
+
+  const users = ((data ?? []) as unknown as UserRow[]).map((u) => ({
     id: u.id,
     displayName: u.display_name,
     email: u.email,

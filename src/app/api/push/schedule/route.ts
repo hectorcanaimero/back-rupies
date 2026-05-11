@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       target_value: targetValue ?? null,
       target_users: targetUsers ?? null,
       scheduled_at: scheduledAt,
-    })
+    } as never)
     .select("id, scheduled_at")
     .single();
 
@@ -62,9 +62,11 @@ export async function POST(request: Request) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
+  const row = data as unknown as { id: string; scheduled_at: string };
+
   return Response.json({
     success: true,
-    id: data.id,
-    scheduledAt: data.scheduled_at,
+    id: row.id,
+    scheduledAt: row.scheduled_at,
   });
 }
