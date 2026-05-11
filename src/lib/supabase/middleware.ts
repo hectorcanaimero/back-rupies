@@ -31,15 +31,30 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const isLoginPage = request.nextUrl.pathname.startsWith("/login");
+
   // No session and not on login → redirect to login
-  if (!user && !request.nextUrl.pathname.startsWith("/login")) {
+  if (!user && !isLoginPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // User exists → check admin_users table
+  // User exists → check admin_users + session age
   if (user) {
+    // Session expiry: force re-login after 24 hours
+    const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+    const lastSignIn = user.last_sign_in_at
+      ? new Date(user.last_sign_in_at).getTime()
+      : 0;
+    const sessionAge = Date.now() - lastSignIn;
+
+    if (sessionAge > SESSION_MAX_AGE_MS && !isLoginPage) {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
     const { data: adminUser } = await supabase
       .from("admin_users")
       .select("id")
