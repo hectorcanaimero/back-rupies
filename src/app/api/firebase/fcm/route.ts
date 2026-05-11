@@ -1,5 +1,5 @@
 // src/app/api/firebase/fcm/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 import type { Notification } from "firebase-admin/messaging";
 
@@ -15,6 +15,7 @@ const FcmTargetSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("topic"), value: z.string().min(1) }),
   z.object({ type: z.literal("token"), value: z.string().min(1) }),
   z.object({ type: z.literal("all"), value: z.string().default("all") }),
+  z.object({ type: z.literal("users"), tokens: z.array(z.string().min(1)).min(1) }),
 ]);
 
 const FcmBodySchema = z.object({
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     const parsed = FcmBodySchema.safeParse(json);
 
     if (!parsed.success) {
-      return NextResponse.json(
+      return Response.json(
         { error: "Dados inválidos", details: parsed.error.flatten() },
         { status: 400 }
       );
@@ -49,6 +50,23 @@ export async function POST(request: NextRequest) {
     };
 
     const messaging = await getMessaging();
+
+    if (target.type === "users") {
+      const response = await messaging.sendEachForMulticast({
+        tokens: target.tokens,
+        notification,
+        data: data ?? {},
+        android: { priority: "high" },
+        apns: { payload: { aps: { sound: "default" } } },
+      });
+
+      return Response.json({
+        success: true,
+        successCount: response.successCount,
+        failureCount: response.failureCount,
+        sentAt: new Date().toISOString(),
+      });
+    }
 
     let messageId: string;
 
@@ -75,7 +93,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    return Response.json({
       success: true,
       messageId,
       sentAt: new Date().toISOString(),
@@ -84,7 +102,7 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : "Erro desconhecido";
     console.error("[FCM] Send error:", message);
-    return NextResponse.json(
+    return Response.json(
       { error: "Falha ao enviar notificação", detail: message },
       { status: 500 }
     );
