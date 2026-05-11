@@ -21,7 +21,7 @@ CREATE TABLE public.scheduled_pushes (
   error_message  TEXT,
   sent_at        TIMESTAMPTZ,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_by     UUID        REFERENCES public.admin_users(id)
+  created_by     UUID
 );
 
 -- Index for efficient polling of pending pushes ordered by schedule time
