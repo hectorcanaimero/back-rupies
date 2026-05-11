@@ -5,6 +5,7 @@ import { FieldGrid } from "@/components/record-detail/field-grid";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/data-table/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,10 +15,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils/format";
 import { SERVICE_CONDITIONS } from "@/lib/utils/constants";
 import { ChevronDown, Star, X } from "lucide-react";
 import { use } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { ChatWithRelations } from "@/types/app";
+import Link from "next/link";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -79,6 +83,74 @@ const MOCK_RATING = {
   prestador_rating: 4,
   prestador_comment: "Boa empresa, pagamento em dia.",
 };
+
+const MOCK_CHATS: ChatWithRelations[] = [
+  {
+    id: "1",
+    userIdA: "1",
+    userIdB: "2",
+    serviceId: "1",
+    leadId: null,
+    last_message: "Pode vir amanhã às 9h?",
+    last_message_at: "2025-05-09T18:00:00Z",
+    created_at: "2025-05-05T10:00:00Z",
+    updated_at: null,
+    userA: { id: "1", display_name: "João Silva", email: "joao@empresa.com" },
+    userB: { id: "2", display_name: "Maria Santos", email: "maria@gmail.com" },
+    services: { id: "1", name: "Eletricista residencial" },
+  },
+  {
+    id: "4",
+    userIdA: "1",
+    userIdB: "6",
+    serviceId: "1",
+    leadId: null,
+    last_message: "Qual o melhor horário?",
+    last_message_at: "2025-05-08T10:00:00Z",
+    created_at: "2025-05-06T09:00:00Z",
+    updated_at: null,
+    userA: { id: "1", display_name: "João Silva", email: "joao@empresa.com" },
+    userB: { id: "6", display_name: "Lucas Mendes", email: "lucas@email.com" },
+    services: { id: "1", name: "Eletricista residencial" },
+  },
+];
+
+const chatColumns: ColumnDef<ChatWithRelations>[] = [
+  {
+    id: "participantes",
+    header: "Participantes",
+    cell: ({ row }) => {
+      const { userA, userB } = row.original;
+      const a = userA?.display_name ?? userA?.email ?? "—";
+      const b = userB?.display_name ?? userB?.email ?? "—";
+      return (
+        <Link href={`/chats/${row.original.id}`} className="hover:underline font-medium">
+          {a} ↔ {b}
+        </Link>
+      );
+    },
+  },
+  {
+    accessorKey: "last_message",
+    header: "Última Mensagem",
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
+        {row.original.last_message ?? "—"}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "last_message_at",
+    header: "Data",
+    cell: ({ row }) =>
+      formatRelativeTime(row.original.last_message_at ?? row.original.created_at),
+  },
+  {
+    accessorKey: "created_at",
+    header: "Criado em",
+    cell: ({ row }) => formatDate(row.original.created_at),
+  },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -205,6 +277,9 @@ export default function ServicoDetailPage({
             Candidaturas ({candidates.length})
           </TabsTrigger>
           <TabsTrigger value="avaliacao">Avaliação</TabsTrigger>
+          <TabsTrigger value="conversas">
+            Conversas ({MOCK_CHATS.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Tab 1: Informações ───────────────────────────────────────── */}
@@ -286,6 +361,21 @@ export default function ServicoDetailPage({
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        {/* ── Tab 4: Conversas ──────────────────────────────────────── */}
+        <TabsContent value="conversas" className="pt-6">
+          {MOCK_CHATS.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhuma conversa vinculada a este serviço.
+            </p>
+          ) : (
+            <DataTable
+              columns={chatColumns}
+              data={MOCK_CHATS}
+              searchKey="last_message"
+              searchPlaceholder="Buscar por mensagem..."
+            />
+          )}
         </TabsContent>
       </Tabs>
     </DetailPanel>

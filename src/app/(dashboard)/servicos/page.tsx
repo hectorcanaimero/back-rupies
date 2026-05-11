@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DataTable } from "@/components/data-table/data-table";
 import { columns } from "./columns";
 import { ExportCsvButton } from "@/components/export-csv-button";
@@ -124,14 +124,14 @@ const MOCK_SERVICES: Service[] = [
 
 async function getServices(): Promise<Service[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("services")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw error;
-    return data ?? MOCK_SERVICES;
+    return data?.length ? data : MOCK_SERVICES;
   } catch {
     return MOCK_SERVICES;
   }

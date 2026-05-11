@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DetailPanel } from "@/components/record-detail";
 import { Button } from "@/components/ui/button";
 import { SubscriptionTabs } from "./subscription-tabs";
@@ -83,7 +83,7 @@ const MOCK_TIMELINE = [
 
 async function getSubscription(id: string): Promise<SubscriptionWithRelations> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("subscriptions")
       .select(`
@@ -102,7 +102,7 @@ async function getSubscription(id: string): Promise<SubscriptionWithRelations> {
 
 async function getSubscriptionUsage(subscriptionId: string): Promise<SubscriptionUsage | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("subscription_usage")
       .select("*")
@@ -119,7 +119,7 @@ async function getSubscriptionUsage(subscriptionId: string): Promise<Subscriptio
 
 async function getSubscriptionCredits(subscriptionId: string): Promise<CreditBalance | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("credit_balances")
       .select("*")

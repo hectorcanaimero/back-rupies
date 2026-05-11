@@ -70,7 +70,12 @@ async function fetchFromGA4(
     // Dynamic import to avoid crash when package isn't installed
     const { BetaAnalyticsDataClient } = await import("@google-analytics/data");
 
-    const client = new BetaAnalyticsDataClient();
+    const client = new BetaAnalyticsDataClient({
+      credentials: {
+        client_email: process.env.FIREBASE_CLIENT_EMAIL,
+        private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      },
+    });
 
     const dateRange = { startDate: `${days}daysAgo`, endDate: "today" };
 

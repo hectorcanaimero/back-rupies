@@ -8,6 +8,13 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
@@ -16,31 +23,38 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
+  const pageIndex = table.getState().pagination.pageIndex;
+  const pageCount = table.getPageCount();
+  const totalRows = table.getFilteredRowModel().rows.length;
+
   return (
-    <div className="flex items-center justify-between px-2">
-      <div className="flex-1 text-sm text-muted-foreground">
-        {table.getFilteredRowModel().rows.length} linha(s) no total
-      </div>
-      <div className="flex items-center space-x-6 lg:space-x-8">
-        <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Linhas por página</p>
-          <select
-            className="h-8 w-[70px] rounded-md border border-input bg-background px-2 text-sm"
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
+    <div className="flex items-center justify-between gap-4 px-1">
+      <p className="text-sm text-muted-foreground tabular-nums">
+        {totalRows} {totalRows === 1 ? "registro" : "registros"}
+      </p>
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-muted-foreground">Por página</p>
+          <Select
+            value={String(table.getState().pagination.pageSize)}
+            onValueChange={(value) => table.setPageSize(Number(value))}
           >
-            {[10, 20, 50].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[10, 20, 50].map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Página {table.getState().pagination.pageIndex + 1} de{" "}
-          {table.getPageCount()}
-        </div>
-        <div className="flex items-center space-x-2">
+        <p className="text-sm font-medium tabular-nums">
+          {pageIndex + 1} / {pageCount || 1}
+        </p>
+        <div className="flex items-center gap-1">
           <Button
             variant="outline"
             size="icon"
@@ -72,7 +86,7 @@ export function DataTablePagination<TData>({
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            onClick={() => table.setPageIndex(pageCount - 1)}
             disabled={!table.getCanNextPage()}
           >
             <ChevronsRight className="h-4 w-4" />

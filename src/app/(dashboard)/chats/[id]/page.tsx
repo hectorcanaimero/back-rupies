@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DetailPanel } from "@/components/record-detail";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChatThread } from "./chat-thread";
@@ -82,7 +82,7 @@ const MOCK_MESSAGES: ChatMessage[] = [
 
 async function getChat(id: string): Promise<ChatWithParticipants> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("chats")
       .select(`
@@ -102,14 +102,14 @@ async function getChat(id: string): Promise<ChatWithParticipants> {
 
 async function getChatMessages(chatId: string): Promise<ChatMessage[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("chats_message")
       .select("*")
       .eq("chatId", chatId)
       .order("created_at", { ascending: true });
     if (error) throw error;
-    return data ?? MOCK_MESSAGES;
+    return data?.length ? data : MOCK_MESSAGES;
   } catch {
     return MOCK_MESSAGES;
   }

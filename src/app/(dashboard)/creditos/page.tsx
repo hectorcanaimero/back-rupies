@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DataTable } from "@/components/data-table/data-table";
 import { columns } from "./columns";
 import { ExportCsvButton } from "@/components/export-csv-button";
@@ -83,7 +83,7 @@ const MOCK_CREDIT_BALANCES: CreditBalanceWithUser[] = [
 
 async function getCreditBalances(): Promise<CreditBalanceWithUser[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("credit_balances")
       .select(`
@@ -93,7 +93,8 @@ async function getCreditBalances(): Promise<CreditBalanceWithUser[]> {
       .order("updated_at", { ascending: false })
       .limit(100);
     if (error) throw error;
-    return (data as CreditBalanceWithUser[]) ?? MOCK_CREDIT_BALANCES;
+    const typed = data as CreditBalanceWithUser[];
+    return typed?.length ? typed : MOCK_CREDIT_BALANCES;
   } catch {
     return MOCK_CREDIT_BALANCES;
   }

@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,10 +33,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImageUpload } from "./components/image-upload";
+import { UserAutocomplete, type UserOption } from "./components/user-autocomplete";
+import { SchedulePicker } from "./components/schedule-picker";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TargetType = "all" | "topic" | "token";
+type TargetType = "all" | "topic" | "token" | "users";
 type SendStatus = "idle" | "sending" | "success" | "error";
 
 interface SentNotification {
@@ -44,7 +48,7 @@ interface SentNotification {
   body: string;
   target: string;
   sentAt: string;
-  status: "success" | "error";
+  status: "success" | "error" | "scheduled";
   messageId?: string;
 }
 
@@ -63,15 +67,15 @@ const FormSchema = z.object({
   body: z.string().min(1, "Corpo obrigatório").max(300),
   imageUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   dataJson: z.string().optional(),
-  targetType: z.enum(["all", "topic", "token"]),
+  targetType: z.enum(["all", "topic", "token", "users"]),
   targetValue: z.string().optional(),
 });
 
 type FormData = z.infer<typeof FormSchema>;
 
-// ─── Mock templates ───────────────────────────────────────────────────────────
+// ─── Templates ───────────────────────────────────────────────────────────────
 
-const INITIAL_TEMPLATES: Template[] = [
+const TEMPLATES: Template[] = [
   {
     id: "1",
     name: "Novo Lead Disponível",
@@ -95,29 +99,6 @@ const INITIAL_TEMPLATES: Template[] = [
   },
 ];
 
-// ─── Mock history ─────────────────────────────────────────────────────────────
-
-const INITIAL_HISTORY: SentNotification[] = [
-  {
-    id: "h1",
-    title: "Boas-vindas à plataforma!",
-    body: "Seja bem-vindo ao Rupies. Complete seu perfil para começar.",
-    target: "Todos",
-    sentAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    status: "success",
-    messageId: "projects/rupies-brasil/messages/abc123",
-  },
-  {
-    id: "h2",
-    title: "Promoção de fim de semana",
-    body: "50% off no plano Pro por tempo limitado!",
-    target: "Tópico: empresas",
-    sentAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    status: "success",
-    messageId: "projects/rupies-brasil/messages/def456",
-  },
-];
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function targetLabel(type: TargetType, value: string): string {
@@ -127,11 +108,20 @@ function targetLabel(type: TargetType, value: string): string {
     if (value === "profissionais") return "Tópico: Profissionais";
     return `Tópico: ${value}`;
   }
+  if (type === "users") return "Usuários específicos";
   return `Token: ${value.slice(0, 20)}...`;
 }
 
 function formatRelativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 0) {
+    // Future (scheduled)
+    const mins = Math.floor(-diff / 60000);
+    if (mins < 60) return `em ${mins}m`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `em ${hours}h`;
+    return `em ${Math.floor(hours / 24)}d`;
+  }
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m atrás`;
   const hours = Math.floor(mins / 60);
@@ -150,11 +140,16 @@ export default function PushPage() {
     targetType: "all",
     targetValue: "",
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData | "users" | "schedule", string>>>({});
   const [sendStatus, setSendStatus] = useState<SendStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
-  const [history, setHistory] = useState<SentNotification[]>(INITIAL_HISTORY);
-  const [templates] = useState<Template[]>(INITIAL_TEMPLATES);
+  const [history, setHistory] = useState<SentNotification[]>([]);
+  const [templates] = useState<Template[]>(TEMPLATES);
+
+  // Additional state for new features
+  const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState("");
 
   // ── Field update helpers ──────────────────────────────────────────────────
 
@@ -174,6 +169,7 @@ export default function PushPage() {
       targetType: template.target.type,
       targetValue: template.target.value,
     });
+    setSelectedUsers([]);
     setErrors({});
     setSendStatus("idle");
   }
@@ -189,6 +185,17 @@ export default function PushPage() {
         fieldErrors[k as keyof FormData] = msgs?.[0];
       }
       setErrors(fieldErrors);
+      return;
+    }
+
+    // Custom validations
+    if (form.targetType === "users" && selectedUsers.length === 0) {
+      setErrors((prev) => ({ ...prev, users: "Selecione pelo menos um usuário" }));
+      return;
+    }
+
+    if (scheduleEnabled && !scheduledAt) {
+      setErrors((prev) => ({ ...prev, schedule: "Selecione a data e horário" }));
       return;
     }
 
@@ -209,20 +216,35 @@ export default function PushPage() {
     const target =
       form.targetType === "all"
         ? { type: "all" as const, value: "all" }
-        : { type: form.targetType, value: form.targetValue ?? "" };
+        : form.targetType === "users"
+          ? { type: "users" as const, tokens: selectedUsers.map((u) => u.fcmToken) }
+          : { type: form.targetType, value: form.targetValue ?? "" };
+
+    const payload = {
+      title: form.title,
+      body: form.body,
+      imageUrl: form.imageUrl || undefined,
+      data: dataPayload,
+      target,
+      ...(scheduleEnabled ? { scheduledAt } : {}),
+    };
 
     try {
-      const res = await fetch("/api/firebase/fcm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title,
-          body: form.body,
-          imageUrl: form.imageUrl || undefined,
-          data: dataPayload,
-          target,
-        }),
-      });
+      let res: Response;
+
+      if (scheduleEnabled) {
+        res = await fetch("/api/push/schedule", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch("/api/firebase/fcm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
 
       const json = await res.json();
 
@@ -238,8 +260,8 @@ export default function PushPage() {
         title: form.title,
         body: form.body,
         target: targetLabel(form.targetType, form.targetValue ?? ""),
-        sentAt: new Date().toISOString(),
-        status: "success",
+        sentAt: scheduleEnabled ? scheduledAt : new Date().toISOString(),
+        status: scheduleEnabled ? "scheduled" : "success",
         messageId: json.messageId,
       };
       setHistory((prev) => [newEntry, ...prev]);
@@ -254,6 +276,9 @@ export default function PushPage() {
           targetType: "all",
           targetValue: "",
         });
+        setSelectedUsers([]);
+        setScheduleEnabled(false);
+        setScheduledAt("");
         setSendStatus("idle");
       }, 2000);
     } catch (err) {
@@ -276,6 +301,7 @@ export default function PushPage() {
 
   const needsTokenInput = form.targetType === "token";
   const needsTopicInput = form.targetType === "topic";
+  const needsUsersInput = form.targetType === "users";
   const isSending = sendStatus === "sending";
 
   return (
@@ -346,20 +372,14 @@ export default function PushPage() {
                 </div>
               </div>
 
-              {/* Image URL (optional) */}
+              {/* Image Upload */}
               <div className="space-y-1.5">
-                <Label htmlFor="push-image">Imagem (URL, opcional)</Label>
-                <Input
-                  id="push-image"
-                  type="url"
-                  placeholder="https://..."
-                  value={form.imageUrl}
-                  onChange={(e) => setField("imageUrl", e.target.value)}
+                <Label>Imagem (opcional)</Label>
+                <ImageUpload
+                  value={form.imageUrl ?? ""}
+                  onChange={(url) => setField("imageUrl", url)}
                   disabled={isSending}
                 />
-                {errors.imageUrl && (
-                  <p className="text-xs text-red-500">{errors.imageUrl}</p>
-                )}
               </div>
 
               {/* Data payload (optional JSON) */}
@@ -393,6 +413,8 @@ export default function PushPage() {
                     onValueChange={(v) => {
                       setField("targetType", v as TargetType);
                       setField("targetValue", "");
+                      setSelectedUsers([]);
+                      setErrors((prev) => ({ ...prev, users: undefined }));
                     }}
                     disabled={isSending}
                   >
@@ -416,6 +438,12 @@ export default function PushPage() {
                         <span className="flex items-center gap-2">
                           <User className="h-3.5 w-3.5" />
                           Usuário específico
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="users">
+                        <span className="flex items-center gap-2">
+                          <Users className="h-3.5 w-3.5" />
+                          Usuários específicos
                         </span>
                       </SelectItem>
                     </SelectContent>
@@ -454,13 +482,49 @@ export default function PushPage() {
                     </p>
                   </div>
                 )}
+
+                {needsUsersInput && (
+                  <div className="space-y-1.5">
+                    <UserAutocomplete
+                      selected={selectedUsers}
+                      onChange={(users) => {
+                        setSelectedUsers(users);
+                        setErrors((prev) => ({ ...prev, users: undefined }));
+                      }}
+                      disabled={isSending}
+                    />
+                    {errors.users && (
+                      <p className="text-xs text-red-500">{errors.users}</p>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {/* Schedule Picker */}
+              <SchedulePicker
+                enabled={scheduleEnabled}
+                onEnabledChange={(enabled) => {
+                  setScheduleEnabled(enabled);
+                  setErrors((prev) => ({ ...prev, schedule: undefined }));
+                }}
+                scheduledAt={scheduledAt}
+                onScheduledAtChange={(value) => {
+                  setScheduledAt(value);
+                  setErrors((prev) => ({ ...prev, schedule: undefined }));
+                }}
+                disabled={isSending}
+              />
+              {errors.schedule && (
+                <p className="text-xs text-red-500">{errors.schedule}</p>
+              )}
 
               {/* Status feedback */}
               {sendStatus === "success" && (
                 <div className="flex items-center gap-2 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 text-sm text-emerald-500">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  Notificação enviada com sucesso!
+                  {scheduleEnabled
+                    ? "Notificação agendada com sucesso!"
+                    : "Notificação enviada com sucesso!"}
                 </div>
               )}
               {sendStatus === "error" && (
@@ -479,7 +543,12 @@ export default function PushPage() {
                 {isSending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
+                    {scheduleEnabled ? "Agendando..." : "Enviando..."}
+                  </>
+                ) : scheduleEnabled ? (
+                  <>
+                    <CalendarClock className="mr-2 h-4 w-4" />
+                    Agendar Notificação
                   </>
                 ) : (
                   <>
@@ -546,6 +615,8 @@ export default function PushPage() {
                   <div className="flex items-start gap-3 min-w-0">
                     {item.status === "success" ? (
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                    ) : item.status === "scheduled" ? (
+                      <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
                     ) : (
                       <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                     )}
@@ -558,6 +629,11 @@ export default function PushPage() {
                         <Badge variant="secondary" className="text-xs">
                           {item.target}
                         </Badge>
+                        {item.status === "scheduled" && (
+                          <Badge variant="outline" className="text-xs text-blue-500 border-blue-500/30">
+                            Agendado
+                          </Badge>
+                        )}
                         {item.messageId && (
                           <span className="text-xs text-muted-foreground font-mono truncate max-w-48">
                             {item.messageId}

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DetailPanel } from "@/components/record-detail";
 import { Button } from "@/components/ui/button";
 import { LeadTabs } from "./lead-tabs";
@@ -58,7 +58,7 @@ const MOCK_EMPRESA = {
 
 async function getLead(id: string): Promise<Lead> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("leads")
       .select("*")
@@ -74,7 +74,7 @@ async function getLead(id: string): Promise<Lead> {
 async function getLeadEmpresa(userId: string | null) {
   if (!userId) return MOCK_EMPRESA;
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("users")
       .select("id, display_name, email")
@@ -89,14 +89,14 @@ async function getLeadEmpresa(userId: string | null) {
 
 async function getLeadContacts(leadId: string): Promise<LeadContact[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("lead_contact")
       .select("*")
       .eq("leadId", leadId)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data ?? MOCK_CONTACTS;
+    return data?.length ? data : MOCK_CONTACTS;
   } catch {
     return MOCK_CONTACTS;
   }
@@ -104,13 +104,13 @@ async function getLeadContacts(leadId: string): Promise<LeadContact[]> {
 
 async function getLeadAttachments(leadId: string): Promise<LeadAttachment[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("lead_attachment")
       .select("*")
       .eq("leadId", leadId);
     if (error) throw error;
-    return data ?? MOCK_ATTACHMENTS;
+    return data?.length ? data : MOCK_ATTACHMENTS;
   } catch {
     return MOCK_ATTACHMENTS;
   }

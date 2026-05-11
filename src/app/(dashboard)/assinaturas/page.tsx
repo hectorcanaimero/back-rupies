@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DataTable } from "@/components/data-table/data-table";
 import { columns } from "./columns";
 import { ExportCsvButton } from "@/components/export-csv-button";
@@ -113,7 +113,7 @@ const MOCK_SUBSCRIPTIONS: SubscriptionWithRelations[] = [
 
 async function getSubscriptions(): Promise<SubscriptionWithRelations[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("subscriptions")
       .select(`
@@ -124,7 +124,8 @@ async function getSubscriptions(): Promise<SubscriptionWithRelations[]> {
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw error;
-    return (data as SubscriptionWithRelations[]) ?? MOCK_SUBSCRIPTIONS;
+    const typed = data as SubscriptionWithRelations[];
+    return typed?.length ? typed : MOCK_SUBSCRIPTIONS;
   } catch {
     return MOCK_SUBSCRIPTIONS;
   }

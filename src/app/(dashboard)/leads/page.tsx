@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DataTable } from "@/components/data-table/data-table";
 import { columns } from "./columns";
 import type { LeadWithUser } from "@/types/app";
@@ -50,14 +50,15 @@ const MOCK_LEADS: LeadWithUser[] = [
 
 async function getLeads(): Promise<LeadWithUser[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("leads")
       .select("*, users(id, display_name, email)")
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw error;
-    return (data as LeadWithUser[]) ?? MOCK_LEADS;
+    const typed = data as LeadWithUser[];
+    return typed?.length ? typed : MOCK_LEADS;
   } catch {
     return MOCK_LEADS;
   }

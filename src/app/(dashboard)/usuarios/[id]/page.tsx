@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DetailPanel } from "@/components/record-detail";
 import { Button } from "@/components/ui/button";
 import { UserTabs } from "./user-tabs";
@@ -81,7 +81,7 @@ const MOCK_TIMELINE = [
 
 async function getUser(id: string): Promise<User> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("users")
       .select("*")
@@ -96,14 +96,14 @@ async function getUser(id: string): Promise<User> {
 
 async function getUserServices(userId: string) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("services")
       .select("id, name, condition, created_at")
       .eq("userId", userId)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data ?? MOCK_USER_SERVICES;
+    return data?.length ? data : MOCK_USER_SERVICES;
   } catch {
     return MOCK_USER_SERVICES;
   }
@@ -111,7 +111,7 @@ async function getUserServices(userId: string) {
 
 async function getUserSubscription(userId: string) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("subscriptions")
       .select("plan_name, status, credits_remaining, credits_granted, period_start, period_end")

@@ -1,7 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
-import { DataTable } from "@/components/data-table/data-table";
-import { columns } from "./columns";
-import { ExportCsvButton } from "@/components/export-csv-button";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { UsuariosTabs } from "./usuarios-tabs";
 import type { User } from "@/types/app";
 
 // Mock data for development
@@ -150,14 +148,14 @@ const MOCK_USERS: User[] = [
 
 async function getUsers(): Promise<User[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("users")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw error;
-    return data ?? MOCK_USERS;
+    return data?.length ? data : MOCK_USERS;
   } catch {
     return MOCK_USERS;
   }
@@ -166,32 +164,5 @@ async function getUsers(): Promise<User[]> {
 export default async function UsuariosPage() {
   const users = await getUsers();
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Usuários</h1>
-          <p className="text-sm text-muted-foreground">{users.length} registros</p>
-        </div>
-        <ExportCsvButton
-          data={users}
-          filename="usuarios"
-          columns={[
-            { key: "id", label: "ID" },
-            { key: "display_name", label: "Nome" },
-            { key: "email", label: "E-mail" },
-            { key: "app", label: "Tipo" },
-            { key: "status", label: "Status" },
-            { key: "created_at", label: "Criado em" },
-          ]}
-        />
-      </div>
-      <DataTable
-        columns={columns}
-        data={users}
-        searchKey="display_name"
-        searchPlaceholder="Buscar por nome..."
-      />
-    </div>
-  );
+  return <UsuariosTabs users={users} />;
 }

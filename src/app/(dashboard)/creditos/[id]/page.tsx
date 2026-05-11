@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DetailPanel } from "@/components/record-detail";
 import { CreditTabs } from "./credit-tabs";
 import type { CreditBalanceWithUser } from "@/types/app";
@@ -72,7 +72,7 @@ export interface CreditConsumptionEntry {
 
 async function getCreditBalance(id: string): Promise<CreditBalanceWithUser> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("credit_balances")
       .select(`

@@ -21,6 +21,9 @@ import {
   BarChart3,
   Settings,
   BellRing,
+  GalleryHorizontalEnd,
+  Layers,
+  Store,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -62,6 +65,9 @@ const navSections: NavSection[] = [
     items: [
       { label: "Categorias", href: "/categorias", icon: Tag },
       { label: "Banners", href: "/banners", icon: Image },
+      { label: "Carousel Empresas", href: "/carousel-empresas", icon: GalleryHorizontalEnd },
+      { label: "Tipo Fornecedores", href: "/tipo-fornecedores", icon: Layers },
+      { label: "Fornecedores", href: "/fornecedores", icon: Store },
       { label: "FAQs", href: "/faqs", icon: HelpCircle },
       { label: "Planos", href: "/planos", icon: Package },
     ],

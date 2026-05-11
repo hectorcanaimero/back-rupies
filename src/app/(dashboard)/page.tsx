@@ -5,7 +5,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils/format";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DashboardCharts } from "./dashboard-charts";
 import {
   Users,
@@ -64,7 +64,7 @@ interface DashboardData {
 
 async function fetchDashboardData(): Promise<DashboardData> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // KPI: Usuários Ativos
     const { count: activeUsers } = await supabase

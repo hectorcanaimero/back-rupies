@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DetailPanel } from "@/components/record-detail";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ const MOCK_PLAN: SubscriptionPlan = {
 
 async function getPlan(id: string): Promise<SubscriptionPlan> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("subscription_plans")
       .select("*")
@@ -40,7 +40,7 @@ async function getPlan(id: string): Promise<SubscriptionPlan> {
 
 async function getSubscriberCount(planId: string): Promise<number> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { count, error } = await supabase
       .from("subscriptions")
       .select("*", { count: "exact", head: true })

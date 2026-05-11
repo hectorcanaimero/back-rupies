@@ -1,7 +1,7 @@
 "use client";
 
 import { Column } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -20,20 +20,26 @@ export function DataTableColumnHeader<TData, TValue>({
     return <div className={cn(className)}>{title}</div>;
   }
 
+  const sorted = column.getIsSorted();
+
   return (
     <Button
       variant="ghost"
       size="sm"
-      className={cn("-ml-3 h-8 data-[state=open]:bg-accent", className)}
-      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      className={cn(
+        "-ml-3 h-8 text-xs font-semibold uppercase tracking-wider hover:bg-transparent hover:text-foreground",
+        sorted && "text-foreground",
+        className
+      )}
+      onClick={() => column.toggleSorting(sorted === "asc")}
     >
       {title}
-      {column.getIsSorted() === "desc" ? (
-        <ArrowDown className="ml-2 h-4 w-4" />
-      ) : column.getIsSorted() === "asc" ? (
-        <ArrowUp className="ml-2 h-4 w-4" />
+      {sorted === "desc" ? (
+        <ArrowDown className="ml-1.5 h-3.5 w-3.5" />
+      ) : sorted === "asc" ? (
+        <ArrowUp className="ml-1.5 h-3.5 w-3.5" />
       ) : (
-        <ArrowUpDown className="ml-2 h-4 w-4" />
+        <ChevronsUpDown className="ml-1.5 h-3.5 w-3.5 opacity-40" />
       )}
     </Button>
   );

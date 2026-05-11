@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DataTable } from "@/components/data-table/data-table";
 import { columns } from "./columns";
 import type { ChatWithRelations } from "@/types/app";
@@ -50,7 +50,7 @@ const MOCK_CHATS: ChatWithRelations[] = [
 
 async function getChats(): Promise<ChatWithRelations[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("chats")
       .select(`
@@ -62,7 +62,8 @@ async function getChats(): Promise<ChatWithRelations[]> {
       .order("last_message_at", { ascending: false })
       .limit(100);
     if (error) throw error;
-    return (data as ChatWithRelations[]) ?? MOCK_CHATS;
+    const typed = data as ChatWithRelations[];
+    return typed?.length ? typed : MOCK_CHATS;
   } catch {
     return MOCK_CHATS;
   }

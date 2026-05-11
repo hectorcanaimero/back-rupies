@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils/format";
 import { RevenueCharts } from "./revenue-charts";
@@ -90,7 +90,7 @@ async function fetchRevenueData(): Promise<{
   planDistribution: PlanDistributionPoint[];
 }> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Active subscriptions count
     const { count: activeCount } = await supabase

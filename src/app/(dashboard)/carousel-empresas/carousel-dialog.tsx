@@ -14,32 +14,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Upload, X } from "lucide-react";
-import type { Banner } from "@/types/app";
+import type { ExternalBanner } from "@/types/app";
 
-const DEVICE_OPTIONS = [
-  { value: "empresa", label: "Empresa" },
-  { value: "prestador", label: "Prestador" },
-] as const;
-
-const bannerSchema = z.object({
+const carouselSchema = z.object({
   image: z.string().url("URL de imagem inválida"),
   url: z.string().url("URL inválida").or(z.literal("")),
-  position: z.coerce.number().int().min(0, "Posição deve ser positiva"),
+  text_button: z.string().min(1, "Texto do botão é obrigatório"),
+  color_button: z.string().min(1, "Cor do botão é obrigatória"),
+  color_text: z.string().min(1, "Cor do texto é obrigatória"),
+  order: z.coerce.number().int().min(0, "Ordem deve ser positiva"),
   status: z.boolean(),
-  dateStart: z.string().nullable(),
-  dateEnd: z.string().nullable(),
-  device: z.array(z.string()).min(1, "Selecione pelo menos um dispositivo"),
+  start: z.string().nullable(),
+  end: z.string().nullable(),
 });
 
-type BannerFormData = z.infer<typeof bannerSchema>;
+type CarouselFormData = z.infer<typeof carouselSchema>;
 
-interface BannerDialogProps {
+interface CarouselDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  banner?: Banner | null;
-  onSave: (data: BannerFormData, id?: string) => Promise<void>;
+  item?: ExternalBanner | null;
+  onSave: (data: CarouselFormData, id?: string) => Promise<void>;
 }
 
 function toDatetimeLocal(iso: string | null | undefined): string {
@@ -55,38 +51,42 @@ function fromDatetimeLocal(value: string): string | null {
   return new Date(value).toISOString();
 }
 
-export function BannerDialog({
+export function CarouselDialog({
   open,
   onOpenChange,
-  banner,
+  item,
   onSave,
-}: BannerDialogProps) {
+}: CarouselDialogProps) {
   const [image, setImage] = useState("");
   const [url, setUrl] = useState("");
-  const [position, setPosition] = useState("0");
+  const [textButton, setTextButton] = useState("");
+  const [colorButton, setColorButton] = useState("#000000");
+  const [colorText, setColorText] = useState("#ffffff");
+  const [order, setOrder] = useState("0");
   const [status, setStatus] = useState(true);
-  const [dateStart, setDateStart] = useState("");
-  const [dateEnd, setDateEnd] = useState("");
-  const [device, setDevice] = useState<string[]>(["empresa"]);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isEditing = banner != null;
+  const isEditing = item != null;
 
   useEffect(() => {
     if (open) {
-      setImage(banner?.image ?? "");
-      setUrl(banner?.url ?? "");
-      setPosition(String(banner?.position ?? 0));
-      setStatus(banner?.status ?? true);
-      setDateStart(toDatetimeLocal(banner?.dateStart));
-      setDateEnd(toDatetimeLocal(banner?.dateEnd));
-      setDevice(banner?.device ?? ["empresa"]);
+      setImage(item?.image ?? "");
+      setUrl(item?.url ?? "");
+      setTextButton(item?.text_button ?? "");
+      setColorButton(item?.color_button ?? "#000000");
+      setColorText(item?.color_text ?? "#ffffff");
+      setOrder(String(item?.order ?? 0));
+      setStatus(item?.status ?? true);
+      setStart(toDatetimeLocal(item?.start));
+      setEnd(toDatetimeLocal(item?.end));
       setErrors({});
     }
-  }, [open, banner]);
+  }, [open, item]);
 
   async function handleFileUpload(file: File) {
     setUploading(true);
@@ -118,23 +118,17 @@ export function BannerDialog({
     }
   }
 
-  function toggleDevice(value: string) {
-    setDevice((prev) =>
-      prev.includes(value)
-        ? prev.filter((d) => d !== value)
-        : [...prev, value]
-    );
-  }
-
   async function handleSubmit() {
-    const result = bannerSchema.safeParse({
+    const result = carouselSchema.safeParse({
       image,
       url,
-      position,
+      text_button: textButton,
+      color_button: colorButton,
+      color_text: colorText,
+      order,
       status,
-      dateStart: fromDatetimeLocal(dateStart),
-      dateEnd: fromDatetimeLocal(dateEnd),
-      device,
+      start: fromDatetimeLocal(start),
+      end: fromDatetimeLocal(end),
     });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -146,7 +140,7 @@ export function BannerDialog({
     }
     setSaving(true);
     try {
-      await onSave(result.data, banner?.id);
+      await onSave(result.data, item?.id);
       onOpenChange(false);
     } finally {
       setSaving(false);
@@ -158,10 +152,11 @@ export function BannerDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Editar Banner" : "Novo Banner"}
+            {isEditing ? "Editar Carousel" : "Novo Carousel"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
+          {/* Image upload */}
           <div className="space-y-1.5">
             <Label>Imagem</Label>
             <input
@@ -223,10 +218,12 @@ export function BannerDialog({
               <p className="text-xs text-destructive">{errors.image}</p>
             )}
           </div>
+
+          {/* URL */}
           <div className="space-y-1.5">
-            <Label htmlFor="ban-url">URL de destino</Label>
+            <Label htmlFor="car-url">URL de destino</Label>
             <Input
-              id="ban-url"
+              id="car-url"
               placeholder="https://..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -235,61 +232,116 @@ export function BannerDialog({
               <p className="text-xs text-destructive">{errors.url}</p>
             )}
           </div>
+
+          {/* Button text + colors */}
+          <div className="space-y-1.5">
+            <Label htmlFor="car-text">Texto do botão</Label>
+            <Input
+              id="car-text"
+              placeholder="Ex: Saiba Mais"
+              value={textButton}
+              onChange={(e) => setTextButton(e.target.value)}
+            />
+            {errors.text_button && (
+              <p className="text-xs text-destructive">{errors.text_button}</p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="ban-position">Posição</Label>
+              <Label htmlFor="car-color-btn">Cor do botão</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  id="car-color-btn"
+                  value={colorButton}
+                  onChange={(e) => setColorButton(e.target.value)}
+                  className="h-9 w-9 cursor-pointer rounded border border-input p-0.5"
+                />
+                <Input
+                  value={colorButton}
+                  onChange={(e) => setColorButton(e.target.value)}
+                  className="flex-1 font-mono text-sm"
+                  placeholder="#000000"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="car-color-text">Cor do texto</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  id="car-color-text"
+                  value={colorText}
+                  onChange={(e) => setColorText(e.target.value)}
+                  className="h-9 w-9 cursor-pointer rounded border border-input p-0.5"
+                />
+                <Input
+                  value={colorText}
+                  onChange={(e) => setColorText(e.target.value)}
+                  className="flex-1 font-mono text-sm"
+                  placeholder="#ffffff"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Preview */}
+          {textButton && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Preview do botão</Label>
+              <div>
+                <span
+                  className="inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold"
+                  style={{ backgroundColor: colorButton, color: colorText }}
+                >
+                  {textButton}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Order */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="car-order">Ordem</Label>
               <Input
-                id="ban-position"
+                id="car-order"
                 type="number"
                 min="0"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
+                value={order}
+                onChange={(e) => setOrder(e.target.value)}
               />
-              {errors.position && (
-                <p className="text-xs text-destructive">{errors.position}</p>
+              {errors.order && (
+                <p className="text-xs text-destructive">{errors.order}</p>
               )}
             </div>
-            <div className="space-y-1.5">
-              <Label>Dispositivo</Label>
-              <div className="flex gap-4 pt-2">
-                {DEVICE_OPTIONS.map((opt) => (
-                  <label key={opt.value} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={device.includes(opt.value)}
-                      onCheckedChange={() => toggleDevice(opt.value)}
-                    />
-                    {opt.label}
-                  </label>
-                ))}
-              </div>
-              {errors.device && (
-                <p className="text-xs text-destructive">{errors.device}</p>
-              )}
+            <div className="flex items-end pb-1 gap-3">
+              <Switch id="car-status" checked={status} onCheckedChange={setStatus} />
+              <Label htmlFor="car-status">Ativo</Label>
             </div>
           </div>
+
+          {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="ban-start">Data início</Label>
+              <Label htmlFor="car-start">Data início</Label>
               <Input
-                id="ban-start"
+                id="car-start"
                 type="datetime-local"
-                value={dateStart}
-                onChange={(e) => setDateStart(e.target.value)}
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ban-end">Data fim</Label>
+              <Label htmlFor="car-end">Data fim</Label>
               <Input
-                id="ban-end"
+                id="car-end"
                 type="datetime-local"
-                value={dateEnd}
-                onChange={(e) => setDateEnd(e.target.value)}
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
               />
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Switch id="ban-status" checked={status} onCheckedChange={setStatus} />
-            <Label htmlFor="ban-status">Ativo</Label>
           </div>
         </div>
         <DialogFooter>

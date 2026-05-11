@@ -5,21 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
 import { formatDate } from "@/lib/utils/format";
-import type { Banner } from "@/types/app";
+import type { ExternalBanner } from "@/types/app";
 import { Pencil, Trash2 } from "lucide-react";
 
-interface BannerColumnsProps {
-  onEdit: (banner: Banner) => void;
-  onToggle: (banner: Banner) => void;
-  onDelete: (banner: Banner) => void;
+interface CarouselColumnsProps {
+  onEdit: (item: ExternalBanner) => void;
+  onToggle: (item: ExternalBanner) => void;
+  onDelete: (item: ExternalBanner) => void;
 }
 
-const DEVICE_LABELS: Record<string, string> = {
-  empresa: "Empresa",
-  prestador: "Prestador",
-};
-
-export function getBannerColumns({ onEdit, onToggle, onDelete }: BannerColumnsProps): ColumnDef<Banner>[] {
+export function getCarouselColumns({ onEdit, onToggle, onDelete }: CarouselColumnsProps): ColumnDef<ExternalBanner>[] {
   return [
     {
       accessorKey: "image",
@@ -28,12 +23,30 @@ export function getBannerColumns({ onEdit, onToggle, onDelete }: BannerColumnsPr
         row.original.image ? (
           <img
             src={row.original.image}
-            alt="Banner"
+            alt="Carousel"
             className="h-10 w-20 rounded object-cover"
           />
         ) : (
           <span className="text-muted-foreground">—</span>
         ),
+    },
+    {
+      accessorKey: "text_button",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Botão" />,
+      cell: ({ row }) => {
+        const text = row.original.text_button;
+        const bgColor = row.original.color_button;
+        const textColor = row.original.color_text;
+        if (!text) return <span className="text-muted-foreground">—</span>;
+        return (
+          <span
+            className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold"
+            style={{ backgroundColor: bgColor ?? undefined, color: textColor ?? undefined }}
+          >
+            {text}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "url",
@@ -53,19 +66,6 @@ export function getBannerColumns({ onEdit, onToggle, onDelete }: BannerColumnsPr
         ),
     },
     {
-      id: "device",
-      header: "Dispositivo",
-      cell: ({ row }) => (
-        <div className="flex gap-1">
-          {row.original.device?.map((d) => (
-            <Badge key={d} variant="outline">
-              {DEVICE_LABELS[d] ?? d}
-            </Badge>
-          )) ?? "—"}
-        </div>
-      ),
-    },
-    {
       id: "status",
       header: "Status",
       cell: ({ row }) => (
@@ -75,16 +75,16 @@ export function getBannerColumns({ onEdit, onToggle, onDelete }: BannerColumnsPr
       ),
     },
     {
-      accessorKey: "position",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Posição" />,
-      cell: ({ row }) => row.original.position ?? "—",
+      accessorKey: "order",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Ordem" />,
+      cell: ({ row }) => row.original.order ?? "—",
     },
     {
       id: "period",
       header: "Período",
       cell: ({ row }) => {
-        const start = row.original.dateStart;
-        const end = row.original.dateEnd;
+        const start = row.original.start;
+        const end = row.original.end;
         if (!start && !end) return <span className="text-muted-foreground">Sem período</span>;
         return (
           <span className="text-sm">
