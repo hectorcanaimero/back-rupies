@@ -129,7 +129,7 @@ async function getServices(): Promise<Service[]> {
       .from("services")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(1000);
     if (error) throw error;
     return data?.length ? data : MOCK_SERVICES;
   } catch {

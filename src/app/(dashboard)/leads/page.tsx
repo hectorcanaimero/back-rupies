@@ -55,7 +55,7 @@ async function getLeads(): Promise<LeadWithUser[]> {
       .from("leads")
       .select("*, users(id, display_name, email)")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(1000);
     if (error) throw error;
     const typed = data as LeadWithUser[];
     return typed?.length ? typed : MOCK_LEADS;
