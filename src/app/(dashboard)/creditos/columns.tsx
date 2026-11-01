@@ -7,9 +7,12 @@ import { formatDate, formatCredits } from "@/lib/utils/format";
 import type { CreditBalanceWithUser } from "@/types/app";
 import Link from "next/link";
 
+const BALANCE_KIND: Record<string, string> = { purchase: "Compra", weekly_grant: "Semanal" };
+
 export const columns: ColumnDef<CreditBalanceWithUser>[] = [
   {
     id: "usuario",
+    accessorFn: (b) => `${b.users?.name ?? ""} ${b.users?.email ?? ""}`,
     header: ({ column }) => <DataTableColumnHeader column={column} title="Usuário" />,
     cell: ({ row }) => {
       const user = row.original.users;
@@ -20,7 +23,7 @@ export const columns: ColumnDef<CreditBalanceWithUser>[] = [
             href={`/creditos/${row.original.id}`}
             className="font-medium hover:underline"
           >
-            {user.display_name ?? "—"}
+            {user.name || "—"}
           </Link>
           <p className="text-xs text-muted-foreground">{user.email}</p>
         </div>
@@ -40,47 +43,31 @@ export const columns: ColumnDef<CreditBalanceWithUser>[] = [
     accessorKey: "credits_granted",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Concedidos" />,
     cell: ({ row }) =>
-      row.original.is_unlimited ? (
-        <Badge variant="secondary">Ilimitado</Badge>
-      ) : (
-        <span className="tabular-nums">{row.original.credits_granted}</span>
-      ),
+      <span className="tabular-nums">{row.original.credits_granted}</span>,
   },
   {
     accessorKey: "credits_used",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Usados" />,
     cell: ({ row }) =>
-      row.original.is_unlimited ? "—" : (
-        <span className="tabular-nums text-orange-400">{row.original.credits_used ?? 0}</span>
-      ),
+      <span className="tabular-nums text-orange-400">{row.original.credits_used ?? 0}</span>,
   },
   {
     accessorKey: "credits_remaining",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Restantes" />,
     cell: ({ row }) =>
-      row.original.is_unlimited ? "—" : (
-        <span className="tabular-nums text-green-400">{row.original.credits_remaining ?? 0}</span>
-      ),
+      <span className="tabular-nums text-green-400">{row.original.credits_remaining ?? 0}</span>,
   },
   {
-    id: "unlimited",
-    header: "Ilimitado",
-    cell: ({ row }) =>
-      row.original.is_unlimited ? (
-        <Badge variant="secondary">Sim</Badge>
-      ) : null,
+    id: "kind",
+    header: "Tipo",
+    cell: ({ row }) => (
+      <Badge variant="secondary">{BALANCE_KIND[row.original.kind] ?? row.original.kind}</Badge>
+    ),
   },
   {
     id: "situacao",
     header: "Situação",
     cell: ({ row }) => {
-      if (row.original.is_unlimited) {
-        return (
-          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-500/20 text-blue-400">
-            Ilimitado
-          </span>
-        );
-      }
       const remaining = row.original.credits_remaining ?? 0;
       if (remaining === 0) {
         return (
@@ -97,8 +84,8 @@ export const columns: ColumnDef<CreditBalanceWithUser>[] = [
     },
   },
   {
-    accessorKey: "updated_at",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Atualizado em" />,
-    cell: ({ row }) => formatDate(row.original.updated_at),
+    accessorKey: "created_at",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Criado em" />,
+    cell: ({ row }) => formatDate(row.original.created_at),
   },
 ];

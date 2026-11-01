@@ -24,12 +24,6 @@ import {
 import { Upload, X } from "lucide-react";
 import type { Provider, TypeProvider } from "@/types/app";
 
-const SELECT_OPTIONS = [
-  { value: "first", label: "1º Posição" },
-  { value: "second", label: "2º Posição" },
-  { value: "third", label: "3º Posição" },
-] as const;
-
 const optionalUrl = z.string().url().or(z.literal(""));
 
 const providerSchema = z.object({
@@ -45,7 +39,6 @@ const providerSchema = z.object({
   email: z.string().email("Email inválido").or(z.literal("")),
   order: z.coerce.number().int().min(0, "Ordem deve ser positiva"),
   status: z.boolean(),
-  select: z.string(),
 });
 
 type ProviderFormData = z.infer<typeof providerSchema>;
@@ -96,7 +89,6 @@ export function ProviderDialog({
   const [email, setEmail] = useState("");
   const [order, setOrder] = useState("0");
   const [status, setStatus] = useState(true);
-  const [selectPos, setSelectPos] = useState("second");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -121,7 +113,6 @@ export function ProviderDialog({
       setEmail(item?.email ?? "");
       setOrder(String(item?.order ?? 0));
       setStatus(item?.status ?? true);
-      setSelectPos(item?.select ?? "second");
       setErrors({});
     }
   }, [open, item]);
@@ -164,7 +155,6 @@ export function ProviderDialog({
       email,
       order,
       status,
-      select: selectPos,
     });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -295,21 +285,6 @@ export function ProviderDialog({
                 </SelectContent>
               </Select>
               {errors.type && <p className="text-xs text-destructive">{errors.type}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label>Posição</Label>
-              <Select value={selectPos} onValueChange={setSelectPos}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SELECT_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
 

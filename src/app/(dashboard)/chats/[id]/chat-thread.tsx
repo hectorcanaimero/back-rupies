@@ -7,8 +7,8 @@ import { Volume2, ImageIcon, MessageSquare } from "lucide-react";
 
 interface Participant {
   id: string;
-  display_name: string | null;
-  email: string | null;
+  name: string;
+  email: string;
   role: "Empresa" | "Profissional";
 }
 
@@ -26,11 +26,11 @@ function MessageBubble({
   participant: Participant | undefined;
   isRight: boolean;
 }) {
-  const name = participant?.display_name ?? participant?.email ?? "Usuário";
+  const name = participant?.name || participant?.email || "Usuário";
   const role = participant?.role ?? "—";
 
   function renderContent() {
-    if (message.type === "image") {
+    if (message.message_type === "image") {
       return (
         <div className="space-y-1">
           {message.media_url ? (
@@ -52,7 +52,7 @@ function MessageBubble({
         </div>
       );
     }
-    if (message.type === "audio") {
+    if (message.message_type === "audio") {
       return (
         <div className="flex items-center gap-2">
           <Volume2 className="h-4 w-4 text-muted-foreground" />
@@ -90,7 +90,7 @@ function MessageBubble({
       </div>
       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
         <span>{formatDateTime(message.created_at)}</span>
-        {message.read && (
+        {message.read_message && (
           <span className="text-blue-400">Lido</span>
         )}
       </div>
@@ -109,13 +109,13 @@ export function ChatThread({ messages, participants }: ChatThreadProps) {
   }
 
   // First sender is shown on the right (Empresa perspective)
-  const firstSenderId = messages[0]?.senderId;
+  const firstSenderId = messages[0]?.sender_id;
 
   return (
     <div className="flex flex-col gap-4 py-2">
       {messages.map((message) => {
-        const participant = message.senderId ? participants[message.senderId] : undefined;
-        const isRight = message.senderId === firstSenderId;
+        const participant = participants[message.sender_id];
+        const isRight = message.sender_id === firstSenderId;
         return (
           <MessageBubble
             key={message.id}

@@ -10,11 +10,11 @@ import Link from "next/link";
 
 export const columns: ColumnDef<User>[] = [
   {
-    accessorKey: "display_name",
+    accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
     cell: ({ row }) => (
       <Link href={`/usuarios/${row.original.id}`} className="font-medium hover:underline">
-        {row.original.display_name ?? "—"}
+        {row.original.name || "—"}
       </Link>
     ),
   },
@@ -26,8 +26,8 @@ export const columns: ColumnDef<User>[] = [
     id: "tipo",
     header: "Tipo",
     cell: ({ row }) => (
-      <Badge variant={row.original.isContractor ? "default" : "secondary"}>
-        {row.original.isContractor ? "Empresa" : "Profissional"}
+      <Badge variant={row.original.role === "empresa" ? "default" : "secondary"}>
+        {row.original.role === "empresa" ? "Empresa" : row.original.role === "admin" ? "Admin" : "Profissional"}
       </Badge>
     ),
   },

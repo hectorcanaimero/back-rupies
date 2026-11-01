@@ -54,6 +54,8 @@ function LoginForm() {
         email,
         options: {
           emailRedirectTo: window.location.origin + "/auth/callback",
+          // Never sign up from the backoffice: a new auth user would create an rp_users row in the apps' DB
+          shouldCreateUser: false,
         },
       });
 

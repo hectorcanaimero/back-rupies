@@ -4,7 +4,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
-import { formatDate } from "@/lib/utils/format";
 import type { Category } from "@/types/app";
 import { Pencil } from "lucide-react";
 
@@ -19,22 +18,17 @@ export function getCategoryColumns({ onEdit, onToggle }: CategoryColumnsProps): 
       accessorKey: "name",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.name ?? "—"}</span>
+        <span className="font-medium">{row.original.name || "—"}</span>
       ),
     },
     {
       id: "status",
       header: "Status",
       cell: ({ row }) => (
-        <Badge variant={row.original.status ? "default" : "secondary"}>
-          {row.original.status ? "Ativo" : "Inativo"}
+        <Badge variant={row.original.active ? "default" : "secondary"}>
+          {row.original.active ? "Ativo" : "Inativo"}
         </Badge>
       ),
-    },
-    {
-      accessorKey: "created_at",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Criado em" />,
-      cell: ({ row }) => formatDate(row.original.created_at),
     },
     {
       id: "actions",
@@ -54,7 +48,7 @@ export function getCategoryColumns({ onEdit, onToggle }: CategoryColumnsProps): 
             size="sm"
             onClick={() => onToggle(row.original)}
           >
-            {row.original.status ? "Desativar" : "Ativar"}
+            {row.original.active ? "Desativar" : "Ativar"}
           </Button>
         </div>
       ),

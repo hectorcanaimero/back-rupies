@@ -17,11 +17,7 @@ import { Label } from "@/components/ui/label";
 const Schema = z.object({
   title: z.string().min(1, "Título obrigatório").max(200),
   body: z.string().min(1, "Corpo obrigatório").max(500),
-  userId: z
-    .string()
-    .uuid("UUID inválido")
-    .optional()
-    .or(z.literal("")),
+  userId: z.string().uuid("UUID inválido"),
 });
 
 type FormData = z.infer<typeof Schema>;
@@ -29,7 +25,7 @@ type FormData = z.infer<typeof Schema>;
 interface NotificationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { title: string; body: string; userId?: string }) => Promise<void>;
+  onSave: (data: { title: string; body: string; userId: string }) => Promise<void>;
 }
 
 export function NotificationDialog({
@@ -69,7 +65,7 @@ export function NotificationDialog({
       await onSave({
         title: form.title,
         body: form.body,
-        userId: form.userId || undefined,
+        userId: form.userId,
       });
       onOpenChange(false);
     } finally {
@@ -122,7 +118,7 @@ export function NotificationDialog({
           <div className="space-y-1.5">
             <Label htmlFor="notif-user">
               Destinatário{" "}
-              <span className="text-muted-foreground font-normal">(UUID, deixe vazio para todos)</span>
+              <span className="text-muted-foreground font-normal">(UUID do usuário)</span>
             </Label>
             <Input
               id="notif-user"

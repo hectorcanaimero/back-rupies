@@ -87,31 +87,15 @@ const MOCK_RATING = {
 const MOCK_CHATS: ChatWithRelations[] = [
   {
     id: "1",
-    userIdA: "1",
-    userIdB: "2",
-    serviceId: "1",
-    leadId: null,
-    last_message: "Pode vir amanhã às 9h?",
+    contractor_id: "1",
+    prestador_id: "2",
+    service_id: "1",
+    lead_id: null,
     last_message_at: "2025-05-09T18:00:00Z",
     created_at: "2025-05-05T10:00:00Z",
-    updated_at: null,
-    userA: { id: "1", display_name: "João Silva", email: "joao@empresa.com" },
-    userB: { id: "2", display_name: "Maria Santos", email: "maria@gmail.com" },
-    services: { id: "1", name: "Eletricista residencial" },
-  },
-  {
-    id: "4",
-    userIdA: "1",
-    userIdB: "6",
-    serviceId: "1",
-    leadId: null,
-    last_message: "Qual o melhor horário?",
-    last_message_at: "2025-05-08T10:00:00Z",
-    created_at: "2025-05-06T09:00:00Z",
-    updated_at: null,
-    userA: { id: "1", display_name: "João Silva", email: "joao@empresa.com" },
-    userB: { id: "6", display_name: "Lucas Mendes", email: "lucas@email.com" },
-    services: { id: "1", name: "Eletricista residencial" },
+    userA: { id: "1", name: "João Silva", email: "joao@empresa.com" },
+    userB: { id: "2", name: "Maria Santos", email: "maria@gmail.com" },
+    services: { id: "1", title: "Eletricista residencial" },
   },
 ];
 
@@ -121,23 +105,14 @@ const chatColumns: ColumnDef<ChatWithRelations>[] = [
     header: "Participantes",
     cell: ({ row }) => {
       const { userA, userB } = row.original;
-      const a = userA?.display_name ?? userA?.email ?? "—";
-      const b = userB?.display_name ?? userB?.email ?? "—";
+      const a = userA?.name || userA?.email || "—";
+      const b = userB?.name || userB?.email || "—";
       return (
         <Link href={`/chats/${row.original.id}`} className="hover:underline font-medium">
           {a} ↔ {b}
         </Link>
       );
     },
-  },
-  {
-    accessorKey: "last_message",
-    header: "Última Mensagem",
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
-        {row.original.last_message ?? "—"}
-      </span>
-    ),
   },
   {
     accessorKey: "last_message_at",
@@ -372,8 +347,8 @@ export default function ServicoDetailPage({
             <DataTable
               columns={chatColumns}
               data={MOCK_CHATS}
-              searchKey="last_message"
-              searchPlaceholder="Buscar por mensagem..."
+              searchKey="created_at"
+              searchPlaceholder="Buscar..."
             />
           )}
         </TabsContent>

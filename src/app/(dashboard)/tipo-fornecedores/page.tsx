@@ -25,7 +25,7 @@ export default function TipoFornecedoresPage() {
   const fetchItems = useCallback(async () => {
     const supabase = createClient();
     const { data, error } = await supabase
-      .from("type_provider")
+      .from("rp_type_provider")
       .select("*")
       .order("order", { ascending: true });
     if (!error && data) setItems(data as TypeProvider[]);
@@ -48,8 +48,8 @@ export default function TipoFornecedoresPage() {
     );
     const supabase = createClient();
     const { error } = await supabase
-      .from("type_provider")
-      .update({ status: newStatus } as never)
+      .from("rp_type_provider")
+      .update({ status: newStatus })
       .eq("id", item.id);
     if (error) {
       setItems((prev) =>
@@ -63,7 +63,7 @@ export default function TipoFornecedoresPage() {
     setItems((prev) => prev.filter((b) => b.id !== item.id));
     const supabase = createClient();
     const { error } = await supabase
-      .from("type_provider")
+      .from("rp_type_provider")
       .delete()
       .eq("id", item.id);
     if (error) {
@@ -87,23 +87,21 @@ export default function TipoFornecedoresPage() {
       const supabase = createClient();
       if (id) {
         const { data: updated, error } = await supabase
-          .from("type_provider")
-          .update(data as never)
+          .from("rp_type_provider")
+          .update(data)
           .eq("id", id)
           .select()
           .single();
-        if (!error && updated) {
-          setItems((prev) => prev.map((b) => (b.id === id ? (updated as TypeProvider) : b)));
-        }
+        if (error) return alert(`Erro ao salvar: ${error.message}`);
+        setItems((prev) => prev.map((b) => (b.id === id ? updated : b)));
       } else {
         const { data: created, error } = await supabase
-          .from("type_provider")
-          .insert(data as never)
+          .from("rp_type_provider")
+          .insert(data)
           .select()
           .single();
-        if (!error && created) {
-          setItems((prev) => [...prev, created as TypeProvider].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
-        }
+        if (error) return alert(`Erro ao salvar: ${error.message}`);
+        setItems((prev) => [...prev, created].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
       }
     },
     []

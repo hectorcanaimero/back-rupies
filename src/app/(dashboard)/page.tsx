@@ -68,20 +68,20 @@ async function fetchDashboardData(): Promise<DashboardData> {
 
     // KPI: Usuários Ativos
     const { count: activeUsers } = await supabase
-      .from("users")
+      .from("rp_users")
       .select("*", { count: "exact", head: true })
       .eq("status", true)
-      .eq("endRegister", true);
+      .eq("end_register", true);
 
     // KPI: Serviços Abertos
     const { count: openServices } = await supabase
-      .from("services")
+      .from("rp_services")
       .select("*", { count: "exact", head: true })
       .eq("condition", "Opened");
 
     // KPI: MRR — active subscriptions joined with plan price_monthly
     const subscriptionsResult = await supabase
-      .from("subscriptions")
+      .from("rp_subscriptions")
       .select("plan_id")
       .filter("status", "eq", "active");
 
@@ -93,7 +93,7 @@ async function fetchDashboardData(): Promise<DashboardData> {
     if (activeSubscriptions && activeSubscriptions.length > 0) {
       const planIds = activeSubscriptions.map((s) => s.plan_id);
       const plansResult = await supabase
-        .from("subscription_plans")
+        .from("rp_subscription_plans")
         .select("id, price_monthly")
         .in("id", planIds);
 
@@ -116,9 +116,9 @@ async function fetchDashboardData(): Promise<DashboardData> {
     startOfMonth.setHours(0, 0, 0, 0);
 
     const creditBalancesResult = await supabase
-      .from("credit_balances")
+      .from("rp_credit_balances")
       .select("credits_used")
-      .gte("updated_at", startOfMonth.toISOString());
+      .gte("period_start", startOfMonth.toISOString());
 
     const creditBalances = creditBalancesResult.data as
       | { credits_used: number | null }[]
@@ -134,7 +134,7 @@ async function fetchDashboardData(): Promise<DashboardData> {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
     const { data: recentServices } = await supabase
-      .from("services")
+      .from("rp_services")
       .select("created_at")
       .gte("created_at", thirtyDaysAgo);
 
@@ -144,7 +144,7 @@ async function fetchDashboardData(): Promise<DashboardData> {
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
     const { data: recentCandidatures } = await supabase
-      .from("services_candidated")
+      .from("rp_services_candidated")
       .select("created_at")
       .gte("created_at", sevenDaysAgo);
 

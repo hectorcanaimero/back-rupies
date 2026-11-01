@@ -9,111 +9,45 @@ import { getNotificationColumns } from "./columns";
 import { NotificationDialog } from "./notification-dialog";
 import type { Notification } from "@/types/app";
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    userId: null,
-    title: "Bem-vindo ao Rupies!",
-    body: "Complete seu perfil para começar a usar a plataforma.",
-    read: false,
-    created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "2",
-    userId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    title: "Candidatura aprovada",
-    body: "Você foi selecionado para o serviço de Elétrica.",
-    read: true,
-    created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "3",
-    userId: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-    title: "Créditos esgotando",
-    body: "Você tem apenas 2 créditos restantes neste período.",
-    read: false,
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
 export default function NotificacoesPage() {
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from("notifications")
-          .select("*")
-          .order("created_at", { ascending: false });
-        if (!error && data) setNotifications(data as Notification[]);
-      } catch {
-        // fallback to mock
-      }
-    })();
+    createClient()
+      .from("rp_notifications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1000)
+      .then(({ data }) => setNotifications(data ?? []));
   }, []);
 
   const handleToggleRead = useCallback(async (notification: Notification) => {
-    const newRead = !notification.read;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = createClient() as any;
-      await db
-        .from("notifications")
-        .update({ read: newRead })
-        .eq("id", notification.id);
-    } catch {
-      // optimistic update
-    }
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notification.id ? { ...n, read: newRead } : n))
-    );
+    const { data, error } = await createClient()
+      .from("rp_notifications")
+      .update({ read: !notification.read })
+      .eq("id", notification.id)
+      .select()
+      .single();
+    if (error) return alert(`Erro ao salvar: ${error.message}`);
+    setNotifications((prev) => prev.map((n) => (n.id === notification.id ? data : n)));
   }, []);
 
   const handleDelete = useCallback(async (notification: Notification) => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = createClient() as any;
-      await db.from("notifications").delete().eq("id", notification.id);
-    } catch {
-      // optimistic delete
-    }
+    const { error } = await createClient().from("rp_notifications").delete().eq("id", notification.id);
+    if (error) return alert(`Erro ao excluir: ${error.message}`);
     setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
   }, []);
 
   const handleCreate = useCallback(
-    async (data: { title: string; body: string; userId?: string }) => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const db = createClient() as any;
-        const { data: created, error } = await db
-          .from("notifications")
-          .insert({
-            title: data.title,
-            body: data.body,
-            userId: data.userId ?? null,
-            read: false,
-          })
-          .select()
-          .single();
-        if (!error && created) {
-          setNotifications((prev) => [created as Notification, ...prev]);
-          return;
-        }
-      } catch {
-        // optimistic fallback
-      }
-      const temp: Notification = {
-        id: crypto.randomUUID(),
-        title: data.title,
-        body: data.body,
-        userId: data.userId ?? null,
-        read: false,
-        created_at: new Date().toISOString(),
-      };
-      setNotifications((prev) => [temp, ...prev]);
+    async (input: { title: string; body: string; userId: string }) => {
+      const { data, error } = await createClient()
+        .from("rp_notifications")
+        .insert({ title: input.title, body: input.body, user_id: input.userId })
+        .select()
+        .single();
+      if (error) return alert(`Erro ao salvar: ${error.message}`);
+      setNotifications((prev) => [data, ...prev]);
     },
     []
   );

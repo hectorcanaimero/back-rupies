@@ -35,11 +35,11 @@ export function getNotificationColumns({
       ),
     },
     {
-      accessorKey: "userId",
+      accessorKey: "user_id",
       header: "Destinatário",
       cell: ({ row }) => (
         <span className="font-mono text-xs text-muted-foreground">
-          {row.original.userId ? row.original.userId.slice(0, 8) + "..." : "Sistema"}
+          {row.original.user_id.slice(0, 8) + "..."}
         </span>
       ),
     },

@@ -15,12 +15,6 @@ interface ProviderColumnsProps {
   typeNames: Record<string, string>;
 }
 
-const SELECT_LABELS: Record<string, string> = {
-  first: "1º",
-  second: "2º",
-  third: "3º",
-};
-
 export function getProviderColumns({ onEdit, onToggle, onDelete, typeNames }: ProviderColumnsProps): ColumnDef<Provider>[] {
   return [
     {
@@ -54,18 +48,6 @@ export function getProviderColumns({ onEdit, onToggle, onDelete, typeNames }: Pr
         const typeName = row.original.type ? typeNames[row.original.type] : null;
         return typeName ? (
           <Badge variant="outline">{typeName}</Badge>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        );
-      },
-    },
-    {
-      id: "select",
-      header: "Posição",
-      cell: ({ row }) => {
-        const val = row.original.select;
-        return val ? (
-          <Badge variant="secondary">{SELECT_LABELS[val] ?? val}</Badge>
         ) : (
           <span className="text-muted-foreground">—</span>
         );

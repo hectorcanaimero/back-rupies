@@ -19,8 +19,8 @@ export default function FornecedoresPage() {
   const fetchData = useCallback(async () => {
     const supabase = createClient();
     const [providersRes, typesRes] = await Promise.all([
-      supabase.from("providers").select("*").order("order", { ascending: true }),
-      supabase.from("type_provider").select("*").order("name", { ascending: true }),
+      supabase.from("rp_providers").select("*").order("order", { ascending: true }),
+      supabase.from("rp_type_provider").select("*").order("name", { ascending: true }),
     ]);
     if (!providersRes.error && providersRes.data) setItems(providersRes.data as Provider[]);
     if (!typesRes.error && typesRes.data) setTypes(typesRes.data as TypeProvider[]);
@@ -51,8 +51,8 @@ export default function FornecedoresPage() {
     );
     const supabase = createClient();
     const { error } = await supabase
-      .from("providers")
-      .update({ status: newStatus } as never)
+      .from("rp_providers")
+      .update({ status: newStatus })
       .eq("id", item.id);
     if (error) {
       setItems((prev) =>
@@ -66,7 +66,7 @@ export default function FornecedoresPage() {
     setItems((prev) => prev.filter((b) => b.id !== item.id));
     const supabase = createClient();
     const { error } = await supabase
-      .from("providers")
+      .from("rp_providers")
       .delete()
       .eq("id", item.id);
     if (error) {
@@ -89,30 +89,27 @@ export default function FornecedoresPage() {
         email: string;
         order: number;
         status: boolean;
-        select: string;
       },
       id?: string
     ) => {
       const supabase = createClient();
       if (id) {
         const { data: updated, error } = await supabase
-          .from("providers")
-          .update(data as never)
+          .from("rp_providers")
+          .update(data)
           .eq("id", id)
           .select()
           .single();
-        if (!error && updated) {
-          setItems((prev) => prev.map((b) => (b.id === id ? (updated as Provider) : b)));
-        }
+        if (error) return alert(`Erro ao salvar: ${error.message}`);
+        setItems((prev) => prev.map((b) => (b.id === id ? updated : b)));
       } else {
         const { data: created, error } = await supabase
-          .from("providers")
-          .insert(data as never)
+          .from("rp_providers")
+          .insert(data)
           .select()
           .single();
-        if (!error && created) {
-          setItems((prev) => [...prev, created as Provider].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
-        }
+        if (error) return alert(`Erro ao salvar: ${error.message}`);
+        setItems((prev) => [...prev, created].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
       }
     },
     []

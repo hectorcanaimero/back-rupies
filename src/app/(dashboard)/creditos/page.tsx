@@ -4,100 +4,19 @@ import { columns } from "./columns";
 import { ExportCsvButton } from "@/components/export-csv-button";
 import type { CreditBalanceWithUser } from "@/types/app";
 
-// ─── Mock data ─────────────────────────────────────────────────────────────────
-
-const MOCK_CREDIT_BALANCES: CreditBalanceWithUser[] = [
-  {
-    id: "bal-1",
-    user_id: "user-1",
-    subscription_id: "sub-1",
-    period_start: "2026-05-01T00:00:00Z",
-    period_end: "2026-06-01T00:00:00Z",
-    credits_granted: 50,
-    credits_used: 27,
-    credits_remaining: 23,
-    is_unlimited: false,
-    created_at: "2026-05-01T00:00:00Z",
-    updated_at: "2026-05-10T08:00:00Z",
-    users: { id: "user-1", display_name: "João Silva", email: "joao@empresa.com" },
-  },
-  {
-    id: "bal-2",
-    user_id: "user-2",
-    subscription_id: "sub-2",
-    period_start: "2026-05-05T00:00:00Z",
-    period_end: "2026-05-19T00:00:00Z",
-    credits_granted: 10,
-    credits_used: 2,
-    credits_remaining: 8,
-    is_unlimited: false,
-    created_at: "2026-05-05T00:00:00Z",
-    updated_at: "2026-05-07T10:00:00Z",
-    users: { id: "user-2", display_name: "Maria Santos", email: "maria@gmail.com" },
-  },
-  {
-    id: "bal-3",
-    user_id: "user-3",
-    subscription_id: "sub-3",
-    period_start: "2026-04-01T00:00:00Z",
-    period_end: "2026-05-01T00:00:00Z",
-    credits_granted: 50,
-    credits_used: 50,
-    credits_remaining: 0,
-    is_unlimited: false,
-    created_at: "2026-04-01T00:00:00Z",
-    updated_at: "2026-04-28T18:00:00Z",
-    users: { id: "user-3", display_name: "Carlos Lima", email: "carlos@tech.co" },
-  },
-  {
-    id: "bal-4",
-    user_id: "user-6",
-    subscription_id: "sub-6",
-    period_start: "2026-05-01T00:00:00Z",
-    period_end: "2026-06-01T00:00:00Z",
-    credits_granted: 0,
-    credits_used: null,
-    credits_remaining: null,
-    is_unlimited: true,
-    created_at: "2026-05-01T00:00:00Z",
-    updated_at: "2026-05-01T00:00:00Z",
-    users: { id: "user-6", display_name: "Empresa Premium", email: "premium@empresa.com" },
-  },
-  {
-    id: "bal-5",
-    user_id: "user-4",
-    subscription_id: "sub-4",
-    period_start: "2026-04-01T00:00:00Z",
-    period_end: "2026-05-01T00:00:00Z",
-    credits_granted: 200,
-    credits_used: 45,
-    credits_remaining: 155,
-    is_unlimited: false,
-    created_at: "2026-04-01T00:00:00Z",
-    updated_at: "2026-04-20T14:00:00Z",
-    users: { id: "user-4", display_name: "Ana Oliveira", email: "ana@email.com" },
-  },
-];
-
 // ─── Data fetching ─────────────────────────────────────────────────────────────
 
 async function getCreditBalances(): Promise<CreditBalanceWithUser[]> {
-  try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("credit_balances")
-      .select(`
-        *,
-        users ( id, display_name, email )
-      `)
-      .order("updated_at", { ascending: false })
-      .limit(100);
-    if (error) throw error;
-    const typed = data as CreditBalanceWithUser[];
-    return typed?.length ? typed : MOCK_CREDIT_BALANCES;
-  } catch {
-    return MOCK_CREDIT_BALANCES;
-  }
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("rp_credit_balances")
+    .select(`
+      *,
+      users:rp_users ( id, name, email )
+    `)
+    .order("period_start", { ascending: false })
+    .limit(1000);
+  return data ?? [];
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -122,7 +41,7 @@ export default async function CreditosPage() {
             { key: "credits_granted", label: "Concedidos" },
             { key: "credits_used", label: "Usados" },
             { key: "credits_remaining", label: "Restantes" },
-            { key: "is_unlimited", label: "Ilimitado" },
+            { key: "kind", label: "Tipo" },
           ]}
         />
       </div>

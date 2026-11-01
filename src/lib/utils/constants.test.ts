@@ -3,18 +3,18 @@ import { getUserStatus } from "./constants";
 
 describe("getUserStatus", () => {
   it("returns banned when ban=true", () => {
-    expect(getUserStatus({ ban: true, status: true, endRegister: true })).toBe("banned");
+    expect(getUserStatus({ ban: true, status: true, end_register: true })).toBe("banned");
   });
-  it("returns incomplete when endRegister=false", () => {
-    expect(getUserStatus({ ban: false, status: true, endRegister: false })).toBe("incomplete");
+  it("returns incomplete when end_register=false", () => {
+    expect(getUserStatus({ ban: false, status: true, end_register: false })).toBe("incomplete");
   });
   it("returns inactive when status=false", () => {
-    expect(getUserStatus({ ban: false, status: false, endRegister: true })).toBe("inactive");
+    expect(getUserStatus({ ban: false, status: false, end_register: true })).toBe("inactive");
   });
   it("returns active for normal user", () => {
-    expect(getUserStatus({ ban: false, status: true, endRegister: true })).toBe("active");
+    expect(getUserStatus({ ban: false, status: true, end_register: true })).toBe("active");
   });
   it("ban takes priority over incomplete", () => {
-    expect(getUserStatus({ ban: true, status: true, endRegister: false })).toBe("banned");
+    expect(getUserStatus({ ban: true, status: true, end_register: false })).toBe("banned");
   });
 });

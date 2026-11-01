@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +34,6 @@ import {
 } from "@/components/ui/select";
 import { ImageUpload } from "./components/image-upload";
 import { UserAutocomplete, type UserOption } from "./components/user-autocomplete";
-import { SchedulePicker } from "./components/schedule-picker";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,7 +46,7 @@ interface SentNotification {
   body: string;
   target: string;
   sentAt: string;
-  status: "success" | "error" | "scheduled";
+  status: "success" | "error";
   messageId?: string;
 }
 
@@ -114,14 +112,6 @@ function targetLabel(type: TargetType, value: string): string {
 
 function formatRelativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
-  if (diff < 0) {
-    // Future (scheduled)
-    const mins = Math.floor(-diff / 60000);
-    if (mins < 60) return `em ${mins}m`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `em ${hours}h`;
-    return `em ${Math.floor(hours / 24)}d`;
-  }
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m atrás`;
   const hours = Math.floor(mins / 60);
@@ -140,7 +130,7 @@ export default function PushPage() {
     targetType: "all",
     targetValue: "",
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData | "users" | "schedule", string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData | "users", string>>>({});
   const [sendStatus, setSendStatus] = useState<SendStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [history, setHistory] = useState<SentNotification[]>([]);
@@ -148,8 +138,6 @@ export default function PushPage() {
 
   // Additional state for new features
   const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
-  const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState("");
 
   // ── Field update helpers ──────────────────────────────────────────────────
 
@@ -194,11 +182,6 @@ export default function PushPage() {
       return;
     }
 
-    if (scheduleEnabled && !scheduledAt) {
-      setErrors((prev) => ({ ...prev, schedule: "Selecione a data e horário" }));
-      return;
-    }
-
     // Build data payload from JSON string
     let dataPayload: Record<string, string> | undefined;
     if (form.dataJson?.trim()) {
@@ -226,25 +209,14 @@ export default function PushPage() {
       imageUrl: form.imageUrl || undefined,
       data: dataPayload,
       target,
-      ...(scheduleEnabled ? { scheduledAt } : {}),
     };
 
     try {
-      let res: Response;
-
-      if (scheduleEnabled) {
-        res = await fetch("/api/push/schedule", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        res = await fetch("/api/firebase/fcm", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      }
+      const res = await fetch("/api/firebase/fcm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       const json = await res.json();
 
@@ -260,8 +232,8 @@ export default function PushPage() {
         title: form.title,
         body: form.body,
         target: targetLabel(form.targetType, form.targetValue ?? ""),
-        sentAt: scheduleEnabled ? scheduledAt : new Date().toISOString(),
-        status: scheduleEnabled ? "scheduled" : "success",
+        sentAt: new Date().toISOString(),
+        status: "success",
         messageId: json.messageId,
       };
       setHistory((prev) => [newEntry, ...prev]);
@@ -277,8 +249,6 @@ export default function PushPage() {
           targetValue: "",
         });
         setSelectedUsers([]);
-        setScheduleEnabled(false);
-        setScheduledAt("");
         setSendStatus("idle");
       }, 2000);
     } catch (err) {
@@ -500,31 +470,11 @@ export default function PushPage() {
                 )}
               </div>
 
-              {/* Schedule Picker */}
-              <SchedulePicker
-                enabled={scheduleEnabled}
-                onEnabledChange={(enabled) => {
-                  setScheduleEnabled(enabled);
-                  setErrors((prev) => ({ ...prev, schedule: undefined }));
-                }}
-                scheduledAt={scheduledAt}
-                onScheduledAtChange={(value) => {
-                  setScheduledAt(value);
-                  setErrors((prev) => ({ ...prev, schedule: undefined }));
-                }}
-                disabled={isSending}
-              />
-              {errors.schedule && (
-                <p className="text-xs text-red-500">{errors.schedule}</p>
-              )}
-
               {/* Status feedback */}
               {sendStatus === "success" && (
                 <div className="flex items-center gap-2 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 text-sm text-emerald-500">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  {scheduleEnabled
-                    ? "Notificação agendada com sucesso!"
-                    : "Notificação enviada com sucesso!"}
+                  Notificação enviada com sucesso!
                 </div>
               )}
               {sendStatus === "error" && (
@@ -543,12 +493,7 @@ export default function PushPage() {
                 {isSending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {scheduleEnabled ? "Agendando..." : "Enviando..."}
-                  </>
-                ) : scheduleEnabled ? (
-                  <>
-                    <CalendarClock className="mr-2 h-4 w-4" />
-                    Agendar Notificação
+                    Enviando...
                   </>
                 ) : (
                   <>
@@ -615,8 +560,6 @@ export default function PushPage() {
                   <div className="flex items-start gap-3 min-w-0">
                     {item.status === "success" ? (
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                    ) : item.status === "scheduled" ? (
-                      <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
                     ) : (
                       <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                     )}
@@ -629,11 +572,6 @@ export default function PushPage() {
                         <Badge variant="secondary" className="text-xs">
                           {item.target}
                         </Badge>
-                        {item.status === "scheduled" && (
-                          <Badge variant="outline" className="text-xs text-blue-500 border-blue-500/30">
-                            Agendado
-                          </Badge>
-                        )}
                         {item.messageId && (
                           <span className="text-xs text-muted-foreground font-mono truncate max-w-48">
                             {item.messageId}

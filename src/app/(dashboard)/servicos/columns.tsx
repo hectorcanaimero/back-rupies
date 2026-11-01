@@ -9,11 +9,11 @@ import Link from "next/link";
 
 export const columns: ColumnDef<Service>[] = [
   {
-    accessorKey: "name",
+    accessorKey: "title",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
     cell: ({ row }) => (
       <Link href={`/servicos/${row.original.id}`} className="font-medium hover:underline">
-        {row.original.name ?? "—"}
+        {row.original.title || "—"}
       </Link>
     ),
   },
@@ -35,7 +35,7 @@ export const columns: ColumnDef<Service>[] = [
     id: "jobType",
     header: "Tipo",
     cell: ({ row }) => {
-      const jobType = row.original.jobType as keyof typeof JOB_TYPES | null;
+      const jobType = row.original.job_type as keyof typeof JOB_TYPES | null;
       if (!jobType || !JOB_TYPES[jobType]) return "—";
       const config = JOB_TYPES[jobType];
       return (

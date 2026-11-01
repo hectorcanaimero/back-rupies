@@ -94,7 +94,7 @@ async function fetchRevenueData(): Promise<{
 
     // Active subscriptions count
     const { count: activeCount } = await supabase
-      .from("subscriptions")
+      .from("rp_subscriptions")
       .select("*", { count: "exact", head: true })
       .eq("status", "active");
 
@@ -104,13 +104,13 @@ async function fetchRevenueData(): Promise<{
     startOfMonth.setHours(0, 0, 0, 0);
 
     const { count: newCount } = await supabase
-      .from("subscriptions")
+      .from("rp_subscriptions")
       .select("*", { count: "exact", head: true })
       .gte("created_at", startOfMonth.toISOString());
 
     // MRR from active subscriptions
     const activeSubsResult = await supabase
-      .from("subscriptions")
+      .from("rp_subscriptions")
       .select("plan_id, billing_cycle")
       .eq("status", "active");
 
@@ -122,7 +122,7 @@ async function fetchRevenueData(): Promise<{
     if (activeSubs && activeSubs.length > 0) {
       const planIds = activeSubs.map((s) => s.plan_id);
       const plansResult = await supabase
-        .from("subscription_plans")
+        .from("rp_subscription_plans")
         .select("id, price_monthly, price_yearly")
         .in("id", planIds);
 

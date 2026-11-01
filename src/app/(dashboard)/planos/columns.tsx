@@ -46,18 +46,18 @@ export function getPlanColumns({ onEdit }: PlanColumnsProps): ColumnDef<Subscrip
           : (row.original.credits_per_month ?? "—"),
     },
     {
-      accessorKey: "type",
+      accessorKey: "plan_type",
       header: "Tipo",
       cell: ({ row }) => (
-        <Badge variant="outline">{row.original.type ?? row.original.plan_type ?? "—"}</Badge>
+        <Badge variant="outline">{row.original.plan_type || "—"}</Badge>
       ),
     },
     {
       id: "status",
       header: "Status",
       cell: ({ row }) => (
-        <Badge variant={row.original.is_active ? "default" : "secondary"}>
-          {row.original.is_active ? "Ativo" : "Inativo"}
+        <Badge variant={row.original.active ? "default" : "secondary"}>
+          {row.original.active ? "Ativo" : "Inativo"}
         </Badge>
       ),
     },

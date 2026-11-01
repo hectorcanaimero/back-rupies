@@ -21,7 +21,7 @@ export const columns: ColumnDef<SubscriptionWithRelations>[] = [
             href={`/assinaturas/${row.original.id}`}
             className="font-medium hover:underline"
           >
-            {user.display_name ?? "—"}
+            {user.name || "—"}
           </Link>
           <p className="text-xs text-muted-foreground">{user.email}</p>
         </div>

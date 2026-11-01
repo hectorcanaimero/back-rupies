@@ -17,7 +17,7 @@ import type { Category } from "@/types/app";
 
 const categorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
-  status: z.boolean(),
+  active: z.boolean(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -45,13 +45,13 @@ export function CategoryDialog({
   useEffect(() => {
     if (open) {
       setName(category?.name ?? "");
-      setStatus(category?.status ?? true);
+      setStatus(category?.active ?? true);
       setErrors({});
     }
   }, [open, category]);
 
   async function handleSubmit() {
-    const result = categorySchema.safeParse({ name, status });
+    const result = categorySchema.safeParse({ name, active: status });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.errors.forEach((e) => {

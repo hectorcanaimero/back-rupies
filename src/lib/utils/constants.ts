@@ -28,9 +28,9 @@ export type JobType = keyof typeof JOB_TYPES;
 /**
  * Derive user status from user fields
  */
-export function getUserStatus(user: { ban?: boolean | null; status?: boolean | null; endRegister?: boolean | null }): UserStatusKey {
+export function getUserStatus(user: { ban?: boolean | null; status?: boolean | null; end_register?: boolean | null }): UserStatusKey {
   if (user.ban) return "banned";
-  if (!user.endRegister) return "incomplete";
+  if (!user.end_register) return "incomplete";
   if (user.status === false) return "inactive";
   return "active";
 }

@@ -20,14 +20,11 @@ import {
   Coins,
   TrendingUp,
   Tag,
-  Image,
-  HelpCircle,
   Package,
   Bell,
   Bug,
   Gauge,
   BarChart3,
-  Settings,
   BellRing,
 } from "lucide-react";
 
@@ -65,8 +62,6 @@ const navSections: NavSection[] = [
     title: "Conteúdo",
     items: [
       { label: "Categorias", href: "/categorias", icon: Tag },
-      { label: "Banners", href: "/banners", icon: Image },
-      { label: "FAQs", href: "/faqs", icon: HelpCircle },
       { label: "Planos", href: "/planos", icon: Package },
     ],
   },
@@ -82,7 +77,6 @@ const navSections: NavSection[] = [
   {
     title: "Sistema",
     items: [
-      { label: "Configurações", href: "/configuracoes", icon: Settings },
       { label: "Notificações", href: "/notificacoes", icon: BellRing },
     ],
   },

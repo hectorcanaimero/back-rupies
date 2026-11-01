@@ -17,14 +17,11 @@ const routeLabels: Record<string, string> = {
   creditos: "Créditos",
   revenue: "Revenue",
   categorias: "Categorias",
-  banners: "Banners",
-  faqs: "FAQs",
   planos: "Planos",
   push: "Push",
   crashlytics: "Crashlytics",
   performance: "Performance",
   analytics: "Analytics",
-  configuracoes: "Configurações",
   notificacoes: "Notificações",
 };
 

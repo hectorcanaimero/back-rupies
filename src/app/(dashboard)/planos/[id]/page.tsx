@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DetailPanel } from "@/components/record-detail";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,51 +7,24 @@ import { FieldGrid } from "@/components/record-detail";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { SubscriptionPlan } from "@/types/app";
 
-const MOCK_PLAN: SubscriptionPlan = {
-  id: "2",
-  name: "Pro Mensal",
-  description: "Plano profissional mensal com acesso completo",
-  price_monthly: 99.90,
-  price_yearly: null,
-  credits_per_month: 50,
-  is_unlimited: false,
-  is_free: false,
-  is_active: true,
-  sort_order: 2,
-  type: "empresa",
-  plan_type: "empresa",
-  created_at: "2025-01-01T00:00:00Z",
-  updated_at: null,
-};
-
-async function getPlan(id: string): Promise<SubscriptionPlan> {
-  try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("subscription_plans")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-    return data ?? MOCK_PLAN;
-  } catch {
-    return MOCK_PLAN;
-  }
+async function getPlan(id: string): Promise<SubscriptionPlan | null> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("rp_subscription_plans")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  return data;
 }
 
 async function getSubscriberCount(planId: string): Promise<number> {
-  try {
-    const supabase = createAdminClient();
-    const { count, error } = await supabase
-      .from("subscriptions")
-      .select("*", { count: "exact", head: true })
-      .eq("plan_id", planId)
-      .eq("status", "active");
-    if (error) throw error;
-    return count ?? 0;
-  } catch {
-    return 42; // mock
-  }
+  const supabase = createAdminClient();
+  const { count } = await supabase
+    .from("rp_subscriptions")
+    .select("*", { count: "exact", head: true })
+    .eq("plan_id", planId)
+    .eq("status", "active");
+  return count ?? 0;
 }
 
 export default async function PlanoDetailPage({
@@ -63,6 +37,7 @@ export default async function PlanoDetailPage({
     getPlan(id),
     getSubscriberCount(id),
   ]);
+  if (!plan) notFound();
 
   const fields = [
     { label: "Nome", value: plan.name },
@@ -73,13 +48,13 @@ export default async function PlanoDetailPage({
       label: "Créditos/mês",
       value: plan.is_unlimited ? "Ilimitado" : String(plan.credits_per_month ?? "—"),
     },
-    { label: "Tipo", value: plan.type ?? plan.plan_type ?? "—" },
-    { label: "Ordem", value: String(plan.sort_order ?? "—") },
+    { label: "Tipo", value: plan.plan_type || "—" },
+    { label: "Versão", value: String(plan.plan_version) },
     {
       label: "Status",
       value: (
-        <Badge variant={plan.is_active ? "default" : "secondary"}>
-          {plan.is_active ? "Ativo" : "Inativo"}
+        <Badge variant={plan.active ? "default" : "secondary"}>
+          {plan.active ? "Ativo" : "Inativo"}
         </Badge>
       ),
     },
@@ -92,7 +67,6 @@ export default async function PlanoDetailPage({
       value: plan.is_unlimited ? <Badge variant="secondary">Sim</Badge> : "Não",
     },
     { label: "Criado em", value: formatDate(plan.created_at) },
-    { label: "Atualizado em", value: formatDate(plan.updated_at) },
   ];
 
   return (
@@ -122,7 +96,7 @@ export default async function PlanoDetailPage({
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">Tipo de plano</p>
               <p className="text-3xl font-bold mt-1 capitalize">
-                {plan.type ?? plan.plan_type ?? "—"}
+                {plan.plan_type || "—"}
               </p>
             </CardContent>
           </Card>

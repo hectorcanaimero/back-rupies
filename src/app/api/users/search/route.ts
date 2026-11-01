@@ -12,10 +12,10 @@ export async function GET(request: NextRequest) {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
-    .from("users")
-    .select("id, email, display_name, photo_url, fcm_token")
+    .from("rp_users")
+    .select("id, email, name, avatar_url, fcm_token")
     .not("fcm_token", "is", null)
-    .or(`display_name.ilike.%${q}%,email.ilike.%${q}%`)
+    .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
     .limit(20);
 
   if (error) {
@@ -24,17 +24,17 @@ export async function GET(request: NextRequest) {
 
   interface UserRow {
     id: string;
-    display_name: string | null;
+    name: string | null;
     email: string | null;
-    photo_url: string | null;
+    avatar_url: string | null;
     fcm_token: string | null;
   }
 
   const users = ((data ?? []) as unknown as UserRow[]).map((u) => ({
     id: u.id,
-    displayName: u.display_name,
+    displayName: u.name,
     email: u.email,
-    photoUrl: u.photo_url,
+    photoUrl: u.avatar_url,
     fcmToken: u.fcm_token,
   }));
 

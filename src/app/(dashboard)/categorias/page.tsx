@@ -9,34 +9,17 @@ import { getCategoryColumns } from "./columns";
 import { CategoryDialog } from "./category-dialog";
 import type { Category } from "@/types/app";
 
-// Mock data
-const MOCK_CATEGORIES: Category[] = [
-  { id: "1", name: "Elétrica", status: true, created_at: "2025-01-10T00:00:00Z" },
-  { id: "2", name: "Hidráulica", status: true, created_at: "2025-01-11T00:00:00Z" },
-  { id: "3", name: "Pintura", status: false, created_at: "2025-01-12T00:00:00Z" },
-  { id: "4", name: "Construção Civil", status: true, created_at: "2025-01-13T00:00:00Z" },
-  { id: "5", name: "Jardinagem", status: true, created_at: "2025-01-14T00:00:00Z" },
-];
-
 export default function CategoriasPage() {
-  const [categories, setCategories] = useState<Category[]>(MOCK_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  // Load from Supabase on mount
   useEffect(() => {
-    (async () => {
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from("categories")
-          .select("*")
-          .order("name", { ascending: true });
-        if (!error && data) setCategories(data);
-      } catch {
-        // fallback to mock
-      }
-    })();
+    createClient()
+      .from("rp_categories")
+      .select("*")
+      .order("name", { ascending: true })
+      .then(({ data }) => setCategories(data ?? []));
   }, []);
 
   const handleEdit = useCallback((category: Category) => {
@@ -45,75 +28,26 @@ export default function CategoriasPage() {
   }, []);
 
   const handleToggle = useCallback(async (category: Category) => {
-    const newStatus = !category.status;
-    try {
-      // The generated Update type is generic — cast via any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = createClient() as any;
-      await db
-        .from("categories")
-        .update({ status: newStatus })
-        .eq("id", category.id);
-    } catch {
-      // continue optimistic update
-    }
-    setCategories((prev) =>
-      prev.map((c) => (c.id === category.id ? { ...c, status: newStatus } : c))
-    );
+    const { data, error } = await createClient()
+      .from("rp_categories")
+      .update({ active: !category.active })
+      .eq("id", category.id)
+      .select()
+      .single();
+    if (error) return alert(`Erro ao salvar: ${error.message}`);
+    setCategories((prev) => prev.map((c) => (c.id === category.id ? data : c)));
   }, []);
 
-  const handleSave = useCallback(
-    async (data: { name: string; status: boolean }, id?: string) => {
-      try {
-        // The generated Update/Insert types are generic — cast via any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const db = createClient() as any;
-        if (id) {
-          const { data: updated, error } = await db
-            .from("categories")
-            .update({ name: data.name, status: data.status })
-            .eq("id", id)
-            .select()
-            .single();
-          if (!error && updated) {
-            setCategories((prev) =>
-              prev.map((c) => (c.id === id ? (updated as Category) : c))
-            );
-            return;
-          }
-        } else {
-          const { data: created, error } = await db
-            .from("categories")
-            .insert({ name: data.name, status: data.status })
-            .select()
-            .single();
-          if (!error && created) {
-            setCategories((prev) => [created as Category, ...prev]);
-            return;
-          }
-        }
-      } catch {
-        // optimistic fallback
-      }
-      // Optimistic local update when Supabase fails
-      if (id) {
-        setCategories((prev) =>
-          prev.map((c) =>
-            c.id === id ? { ...c, name: data.name, status: data.status } : c
-          )
-        );
-      } else {
-        const tempCategory: Category = {
-          id: crypto.randomUUID(),
-          name: data.name,
-          status: data.status,
-          created_at: new Date().toISOString(),
-        };
-        setCategories((prev) => [tempCategory, ...prev]);
-      }
-    },
-    []
-  );
+  const handleSave = useCallback(async (input: { name: string; active: boolean }, id?: string) => {
+    const db = createClient().from("rp_categories");
+    const { data, error } = id
+      ? await db.update(input).eq("id", id).select().single()
+      : await db.insert(input).select().single();
+    if (error) return alert(`Erro ao salvar: ${error.message}`);
+    setCategories((prev) =>
+      id ? prev.map((c) => (c.id === id ? data : c)) : [data, ...prev]
+    );
+  }, []);
 
   const columns = getCategoryColumns({ onEdit: handleEdit, onToggle: handleToggle });
 

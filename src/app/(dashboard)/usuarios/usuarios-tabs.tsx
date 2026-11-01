@@ -9,9 +9,9 @@ import type { User } from "@/types/app";
 
 const CSV_COLUMNS = [
   { key: "id" as const, label: "ID" },
-  { key: "display_name" as const, label: "Nome" },
+  { key: "name" as const, label: "Nome" },
   { key: "email" as const, label: "E-mail" },
-  { key: "app" as const, label: "Tipo" },
+  { key: "role" as const, label: "Tipo" },
   { key: "status" as const, label: "Status" },
   { key: "created_at" as const, label: "Criado em" },
 ];
@@ -20,8 +20,8 @@ export function UsuariosTabs({ users }: { users: User[] }) {
   const [tab, setTab] = useState("todos");
 
   const filtered = useMemo(() => {
-    if (tab === "empresas") return users.filter((u) => u.isContractor);
-    if (tab === "profissionais") return users.filter((u) => !u.isContractor);
+    if (tab === "empresas") return users.filter((u) => u.role === "empresa");
+    if (tab === "profissionais") return users.filter((u) => u.role === "prestador");
     return users;
   }, [users, tab]);
 
@@ -47,10 +47,10 @@ export function UsuariosTabs({ users }: { users: User[] }) {
             Todos ({users.length})
           </TabsTrigger>
           <TabsTrigger value="empresas">
-            Empresas ({users.filter((u) => u.isContractor).length})
+            Empresas ({users.filter((u) => u.role === "empresa").length})
           </TabsTrigger>
           <TabsTrigger value="profissionais">
-            Profissionais ({users.filter((u) => !u.isContractor).length})
+            Profissionais ({users.filter((u) => u.role === "prestador").length})
           </TabsTrigger>
         </TabsList>
 
@@ -58,7 +58,7 @@ export function UsuariosTabs({ users }: { users: User[] }) {
           <DataTable
             columns={columns}
             data={filtered}
-            searchKey="display_name"
+            searchKey="name"
             searchPlaceholder="Buscar por nome..."
           />
         </TabsContent>

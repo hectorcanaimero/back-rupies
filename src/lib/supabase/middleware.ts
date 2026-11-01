@@ -1,6 +1,15 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Admin allowlist lives in env (ADMIN_EMAILS, comma-separated): the apps' DB has no backoffice tables
+export function isAdminEmail(email: string | null | undefined) {
+  if (!email) return false;
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .includes(email.toLowerCase());
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -40,7 +49,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // User exists → check admin_users + session age
+  // User exists → check ADMIN_EMAILS allowlist + session age
   if (user) {
     // Session expiry: force re-login after 24 hours
     const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -55,11 +64,7 @@ export async function updateSession(request: NextRequest) {
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
-    const { data: adminUser } = await supabase
-      .from("admin_users")
-      .select("id")
-      .eq("email", user.email!)
-      .single();
+    const adminUser = isAdminEmail(user.email);
 
     if (!adminUser && !request.nextUrl.pathname.startsWith("/login")) {
       await supabase.auth.signOut();

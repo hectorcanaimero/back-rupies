@@ -1,11 +1,14 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { connection } from "next/server";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Backoffice data must be read per request, never frozen at build time
+  await connection();
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />

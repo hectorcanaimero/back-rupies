@@ -9,7 +9,7 @@ async function getUsers(): Promise<User[]> {
   try {
     const supabase = createAdminClient();
     const { data, error } = await supabase
-      .from('users')
+      .from('rp_users')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(1000);

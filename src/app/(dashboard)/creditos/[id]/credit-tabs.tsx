@@ -43,7 +43,7 @@ export function CreditTabs({ balance, consumption }: CreditTabsProps) {
       label: "Usuário",
       value: balance.users ? (
         <Link href={`/usuarios/${balance.users.id}`} className="text-primary hover:underline">
-          {balance.users.display_name ?? balance.users.email}
+          {balance.users.name || balance.users.email}
         </Link>
       ) : "—",
     },
@@ -60,26 +60,21 @@ export function CreditTabs({ balance, consumption }: CreditTabsProps) {
     { label: "Fim do Período", value: formatDate(balance.period_end) },
     {
       label: "Créditos Concedidos",
-      value: balance.is_unlimited ? "Ilimitado" : String(balance.credits_granted),
+      value: String(balance.credits_granted),
     },
     {
       label: "Créditos Usados",
-      value: balance.is_unlimited ? "—" : (
-        <span className="text-orange-400 font-medium">{balance.credits_used ?? 0}</span>
-      ),
+      value: <span className="text-orange-400 font-medium">{balance.credits_used ?? 0}</span>,
     },
     {
       label: "Créditos Restantes",
-      value: balance.is_unlimited ? "—" : (
-        <span className="text-green-400 font-medium">{balance.credits_remaining ?? 0}</span>
-      ),
+      value: <span className="text-green-400 font-medium">{balance.credits_remaining ?? 0}</span>,
     },
     {
-      label: "Ilimitado",
-      value: balance.is_unlimited ? <Badge variant="secondary">Sim</Badge> : "Não",
+      label: "Tipo",
+      value: <Badge variant="secondary">{balance.kind === "purchase" ? "Compra" : balance.kind === "weekly_grant" ? "Semanal" : balance.kind}</Badge>,
     },
     { label: "Criado em", value: formatDateTime(balance.created_at) },
-    { label: "Atualizado em", value: formatDateTime(balance.updated_at) },
   ];
 
   const totalConsumed = consumption.reduce((s, e) => s + e.credits_consumed, 0);

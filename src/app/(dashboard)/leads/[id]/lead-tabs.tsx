@@ -5,37 +5,51 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FieldGrid } from "@/components/record-detail";
 import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils/format";
-import type { Lead, LeadContact, LeadAttachment } from "@/types/app";
+import { LEAD_STATUS, type LeadStatus } from "@/lib/utils/constants";
+import type { Lead, LeadContact, User } from "@/types/app";
 import Link from "next/link";
-import { FileText, Paperclip, Users } from "lucide-react";
+import { Users } from "lucide-react";
+
+export interface LeadContactWithUser extends LeadContact {
+  users: Pick<User, "id" | "name" | "email"> | null;
+}
 
 interface LeadTabsProps {
   lead: Lead;
-  contacts: LeadContact[];
-  attachments: LeadAttachment[];
-  empresa: { id: string; display_name: string | null; email: string | null } | null;
+  contacts: LeadContactWithUser[];
+  empresa: Pick<User, "id" | "name" | "email"> | null;
 }
 
-export function LeadTabs({ lead, contacts, attachments, empresa }: LeadTabsProps) {
+export function LeadTabs({ lead, contacts, empresa }: LeadTabsProps) {
   const informacoesFields = [
-    { label: "Nome", value: lead.name ?? "—" },
+    { label: "Título", value: lead.title || "—" },
     {
       label: "Empresa",
       value: empresa ? (
         <Link href={`/usuarios/${empresa.id}`} className="text-primary hover:underline">
-          {empresa.display_name ?? empresa.email ?? "—"}
+          {empresa.name || empresa.email || "—"}
         </Link>
       ) : "—",
     },
-    { label: "Tipo de Fornecedor", value: lead.type_supplier ?? "—" },
-    { label: "Orçamento", value: formatCurrency(lead.budget) },
-    { label: "Quantidade", value: lead.quantity != null ? String(lead.quantity) : "—" },
-    { label: "Prazo de Retorno", value: lead.return_deadline ?? "—" },
+    { label: "Tipo de Fornecedor", value: lead.type_fornecedor ?? "—" },
+    {
+      label: "Orçamento",
+      value: lead.orcamento != null ? formatCurrency(lead.orcamento) : lead.orcamento_faixa ?? "—",
+    },
+    { label: "Quantidade", value: lead.qtd != null ? String(lead.qtd) : "—" },
+    { label: "Prazo de Retorno", value: formatDate(lead.prazo_retorno) },
+    { label: "Data do Evento", value: formatDate(lead.event_date) },
+    {
+      label: "Cidade/Estado",
+      value: lead.city && lead.state ? `${lead.city}, ${lead.state}` : "—",
+    },
+    { label: "Perfil do Público", value: lead.perfil_publico ?? "—" },
+    { label: "Expectativa", value: lead.expectativa ?? "—" },
     {
       label: "Status",
       value: (
-        <Badge variant={lead.finished ? "secondary" : "default"}>
-          {lead.finished ? "Finalizado" : "Aberto"}
+        <Badge variant={lead.status === "open" ? "default" : "secondary"}>
+          {LEAD_STATUS[lead.status as LeadStatus]?.label ?? lead.status}
         </Badge>
       ),
     },
@@ -49,9 +63,6 @@ export function LeadTabs({ lead, contacts, attachments, empresa }: LeadTabsProps
         <TabsTrigger value="informacoes">Informações</TabsTrigger>
         <TabsTrigger value="contatos">
           Contatos ({contacts.length})
-        </TabsTrigger>
-        <TabsTrigger value="anexos">
-          Anexos ({attachments.length})
         </TabsTrigger>
       </TabsList>
 
@@ -84,10 +95,17 @@ export function LeadTabs({ lead, contacts, attachments, empresa }: LeadTabsProps
                 {contacts.map((contact) => (
                   <div key={contact.id} className="py-3 flex items-start justify-between">
                     <div>
-                      <p className="text-sm font-medium">{contact.name ?? "—"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {contact.email ?? "—"} · {contact.phone ?? "—"}
-                      </p>
+                      {contact.users ? (
+                        <Link
+                          href={`/usuarios/${contact.users.id}`}
+                          className="text-sm font-medium hover:underline"
+                        >
+                          {contact.users.name || contact.users.email}
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-medium">—</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">{contact.message ?? "—"}</p>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {formatDate(contact.created_at)}
@@ -100,46 +118,6 @@ export function LeadTabs({ lead, contacts, attachments, empresa }: LeadTabsProps
         </Card>
       </TabsContent>
 
-      {/* Tab: Anexos */}
-      <TabsContent value="anexos">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Paperclip className="h-4 w-4" />
-              Anexos ({attachments.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {attachments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum anexo encontrado.</p>
-            ) : (
-              <div className="divide-y">
-                {attachments.map((attachment) => (
-                  <div key={attachment.id} className="py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{attachment.name ?? "Arquivo"}</p>
-                        <p className="text-xs text-muted-foreground">{attachment.type ?? "—"}</p>
-                      </div>
-                    </div>
-                    {attachment.url && (
-                      <a
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline"
-                      >
-                        Abrir
-                      </a>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
     </Tabs>
   );
 }

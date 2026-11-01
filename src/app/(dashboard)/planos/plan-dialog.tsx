@@ -21,9 +21,8 @@ const planSchema = z.object({
   credits_per_month: z.coerce.number().int().min(0).optional(),
   is_unlimited: z.boolean(),
   is_free: z.boolean(),
-  is_active: z.boolean(),
-  type: z.string().min(1, "Tipo é obrigatório"),
-  sort_order: z.coerce.number().int().min(0),
+  active: z.boolean(),
+  plan_type: z.string().min(1, "Tipo é obrigatório"),
   features: z.string().optional(),
 });
 
@@ -45,8 +44,7 @@ export function PlanDialog({ open, onOpenChange, plan, onSave }: PlanDialogProps
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [isFree, setIsFree] = useState(false);
   const [isActive, setIsActive] = useState(true);
-  const [type, setType] = useState("empresa");
-  const [sortOrder, setSortOrder] = useState("0");
+  const [type, setType] = useState("basic");
   const [features, setFeatures] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -62,9 +60,8 @@ export function PlanDialog({ open, onOpenChange, plan, onSave }: PlanDialogProps
       setCreditsPerMonth(String(plan?.credits_per_month ?? 0));
       setIsUnlimited(plan?.is_unlimited ?? false);
       setIsFree(plan?.is_free ?? false);
-      setIsActive(plan?.is_active ?? true);
-      setType(plan?.type ?? plan?.plan_type ?? "empresa");
-      setSortOrder(String(plan?.sort_order ?? 0));
+      setIsActive(plan?.active ?? true);
+      setType(plan?.plan_type ?? "basic");
       setFeatures("");
       setErrors({});
     }
@@ -79,9 +76,8 @@ export function PlanDialog({ open, onOpenChange, plan, onSave }: PlanDialogProps
       credits_per_month: creditsPerMonth,
       is_unlimited: isUnlimited,
       is_free: isFree,
-      is_active: isActive,
-      type,
-      sort_order: sortOrder,
+      active: isActive,
+      plan_type: type,
       features,
     });
     if (!result.success) {
@@ -185,26 +181,14 @@ export function PlanDialog({ open, onOpenChange, plan, onSave }: PlanDialogProps
               </label>
               <Input
                 id="plan-type"
-                placeholder="Ex: empresa, profissional"
+                placeholder="Ex: free, basic, unlimited"
                 value={type}
                 onChange={(e) => setType(e.target.value)}
               />
-              {errors.type && (
-                <p className="text-xs text-destructive">{errors.type}</p>
+              {errors.plan_type && (
+                <p className="text-xs text-destructive">{errors.plan_type}</p>
               )}
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="plan-order" className="text-sm font-medium leading-none">
-              Ordem de exibição
-            </label>
-            <Input
-              id="plan-order"
-              type="number"
-              min="0"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-            />
           </div>
           <div className="space-y-1.5">
             <label htmlFor="plan-features" className="text-sm font-medium leading-none">

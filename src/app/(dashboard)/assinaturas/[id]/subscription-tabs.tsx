@@ -52,7 +52,7 @@ export function SubscriptionTabs({
       label: "Usuário",
       value: user ? (
         <Link href={`/usuarios/${user.id}`} className="text-primary hover:underline">
-          {user.display_name ?? user.email}
+          {user.name || user.email}
         </Link>
       ) : "—",
     },
@@ -77,11 +77,7 @@ export function SubscriptionTabs({
     },
     { label: "Início do Período", value: formatDate(subscription.current_period_start) },
     { label: "Fim do Período", value: formatDate(subscription.current_period_end) },
-    {
-      label: "Cancelar no Fim do Período",
-      value: subscription.cancel_at_period_end ? "Sim" : "Não",
-    },
-    { label: "Cancelado em", value: formatDateTime(subscription.canceled_at) },
+    { label: "Cancelado em", value: formatDateTime(subscription.cancelled_at) },
     { label: "Trial Início", value: formatDate(subscription.trial_start) },
     { label: "Trial Fim", value: formatDate(subscription.trial_end) },
     {
@@ -165,7 +161,7 @@ export function SubscriptionTabs({
           <CardContent>
             {credits == null ? (
               <p className="text-sm text-muted-foreground">Sem saldo de créditos para este período.</p>
-            ) : credits.is_unlimited ? (
+            ) : subscription.subscription_plans?.is_unlimited ? (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
                   {formatDate(credits.period_start)} → {formatDate(credits.period_end)}

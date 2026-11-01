@@ -13,7 +13,6 @@ import {
 } from "@/lib/utils/constants";
 import {
   formatCPFCNPJ,
-  formatPhone,
   formatDate,
   formatDateTime,
 } from "@/lib/utils/format";
@@ -21,9 +20,9 @@ import type { User } from "@/types/app";
 
 interface UserService {
   id: string;
-  name: string;
+  title: string;
   condition: string;
-  created_at: string;
+  created_at: string | null;
 }
 
 interface UserSubscription {
@@ -31,8 +30,8 @@ interface UserSubscription {
   status: string;
   credits_remaining: number;
   credits_granted: number;
-  period_start: string;
-  period_end: string;
+  period_start: string | null;
+  period_end: string | null;
 }
 
 interface TimelineEvent {
@@ -53,13 +52,12 @@ export function UserTabs({ user, services, subscription, timeline }: UserTabsPro
   const statusConfig = USER_STATUS[statusKey];
 
   const informacoesFields = [
-    { label: "Nome", value: user.display_name ?? "—" },
+    { label: "Nome", value: user.name || "—" },
     { label: "Email", value: user.email ?? "—" },
-    { label: "Telefone", value: formatPhone(user.phone) },
-    { label: "CPF/CNPJ", value: formatCPFCNPJ(user.cpfcnpj) },
+    { label: "CPF/CNPJ", value: formatCPFCNPJ(user.cpf_cnpj) },
     {
       label: "Tipo",
-      value: user.isContractor ? "Empresa (Contratante)" : "Profissional",
+      value: user.role === "empresa" ? "Empresa (Contratante)" : user.role === "admin" ? "Admin" : "Profissional",
     },
     {
       label: "Status",
@@ -75,7 +73,10 @@ export function UserTabs({ user, services, subscription, timeline }: UserTabsPro
       label: "Cidade/Estado",
       value: user.city && user.state ? `${user.city}, ${user.state}` : "—",
     },
-    { label: "Endereço", value: user.address ?? "—" },
+    {
+      label: "Endereço",
+      value: [user.street, user.street_number, user.complement, user.neighborhood].filter(Boolean).join(", ") || "—",
+    },
     { label: "CEP", value: user.cep ?? "—" },
     { label: "Chave Pix", value: user.chave_pix ?? "—" },
     {
@@ -84,7 +85,6 @@ export function UserTabs({ user, services, subscription, timeline }: UserTabsPro
     },
     { label: "Tipo de Empresa", value: user.type_company ?? "—" },
     { label: "Criado em", value: formatDateTime(user.created_at) },
-    { label: "Bio", value: user.bio ?? "—" },
   ];
 
   return (
@@ -136,7 +136,7 @@ export function UserTabs({ user, services, subscription, timeline }: UserTabsPro
                       className="flex items-center justify-between py-3"
                     >
                       <div>
-                        <p className="text-sm font-medium">{service.name}</p>
+                        <p className="text-sm font-medium">{service.title}</p>
                         <p className="text-xs text-muted-foreground">
                           {formatDate(service.created_at)}
                         </p>

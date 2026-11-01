@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DetailPanel } from "@/components/record-detail";
 import { Button } from "@/components/ui/button";
@@ -5,52 +6,6 @@ import { SubscriptionTabs } from "./subscription-tabs";
 import type { SubscriptionWithRelations, SubscriptionUsage, CreditBalance } from "@/types/app";
 
 // ─── Mock data ─────────────────────────────────────────────────────────────────
-
-const MOCK_SUBSCRIPTION: SubscriptionWithRelations = {
-  id: "sub-1",
-  user_id: "user-1",
-  plan_id: "plan-1",
-  asaas_subscription_id: "sub_abc123",
-  asaas_customer_id: "cus_xyz789",
-  status: "active",
-  billing_cycle: "monthly",
-  current_period_start: "2026-05-01T00:00:00Z",
-  current_period_end: "2026-06-01T00:00:00Z",
-  cancel_at_period_end: false,
-  canceled_at: null,
-  trial_start: null,
-  trial_end: null,
-  metadata: null,
-  created_at: "2026-01-10T10:00:00Z",
-  updated_at: "2026-05-01T00:00:00Z",
-  users: { id: "user-1", display_name: "João Silva", email: "joao@empresa.com" },
-  subscription_plans: { id: "plan-1", name: "Pro Mensal", price_monthly: 99.90, price_yearly: null },
-};
-
-const MOCK_USAGE: SubscriptionUsage = {
-  id: "usage-1",
-  subscription_id: "sub-1",
-  period_start: "2026-05-01T00:00:00Z",
-  period_end: "2026-06-01T00:00:00Z",
-  services_created: 7,
-  contractors_contacted: 15,
-  candidates_received: 42,
-  updated_at: "2026-05-10T08:00:00Z",
-};
-
-const MOCK_CREDIT_BALANCE: CreditBalance = {
-  id: "bal-1",
-  user_id: "user-1",
-  subscription_id: "sub-1",
-  period_start: "2026-05-01T00:00:00Z",
-  period_end: "2026-06-01T00:00:00Z",
-  credits_granted: 50,
-  credits_used: 27,
-  credits_remaining: 23,
-  is_unlimited: false,
-  created_at: "2026-05-01T00:00:00Z",
-  updated_at: "2026-05-10T08:00:00Z",
-};
 
 const MOCK_TIMELINE = [
   {
@@ -81,57 +36,42 @@ const MOCK_TIMELINE = [
 
 // ─── Data fetchers ──────────────────────────────────────────────────────────────
 
-async function getSubscription(id: string): Promise<SubscriptionWithRelations> {
-  try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select(`
-        *,
-        users ( id, display_name, email ),
-        subscription_plans ( id, name, price_monthly, price_yearly )
-      `)
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-    return (data as SubscriptionWithRelations) ?? MOCK_SUBSCRIPTION;
-  } catch {
-    return MOCK_SUBSCRIPTION;
-  }
+async function getSubscription(id: string): Promise<SubscriptionWithRelations | null> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("rp_subscriptions")
+    .select(`
+      *,
+      users:rp_users ( id, name, email ),
+      subscription_plans:rp_subscription_plans ( id, name, price_monthly, price_yearly, is_unlimited )
+    `)
+    .eq("id", id)
+    .maybeSingle();
+  return data;
 }
 
 async function getSubscriptionUsage(subscriptionId: string): Promise<SubscriptionUsage | null> {
-  try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("subscription_usage")
-      .select("*")
-      .eq("subscription_id", subscriptionId)
-      .order("period_start", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw error;
-    return data ?? MOCK_USAGE;
-  } catch {
-    return MOCK_USAGE;
-  }
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("rp_subscription_usage")
+    .select("*")
+    .eq("subscription_id", subscriptionId)
+    .order("period_start", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data;
 }
 
 async function getSubscriptionCredits(subscriptionId: string): Promise<CreditBalance | null> {
-  try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("credit_balances")
-      .select("*")
-      .eq("subscription_id", subscriptionId)
-      .order("period_start", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw error;
-    return data ?? MOCK_CREDIT_BALANCE;
-  } catch {
-    return MOCK_CREDIT_BALANCE;
-  }
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("rp_credit_balances")
+    .select("*")
+    .eq("subscription_id", subscriptionId)
+    .order("period_start", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -148,8 +88,9 @@ export default async function AssinaturaDetailPage({
     getSubscriptionUsage(id),
     getSubscriptionCredits(id),
   ]);
+  if (!subscription) notFound();
 
-  const userName = subscription.users?.display_name ?? "Assinatura";
+  const userName = subscription.users?.name || "Assinatura";
   const planName = subscription.subscription_plans?.name ?? "";
 
   return (

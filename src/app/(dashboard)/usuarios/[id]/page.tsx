@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DetailPanel } from "@/components/record-detail";
 import { Button } from "@/components/ui/button";
@@ -5,59 +6,6 @@ import { UserTabs } from "./user-tabs";
 import type { User } from "@/types/app";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
-
-const MOCK_USER: User = {
-  id: "1",
-  display_name: "João Silva",
-  email: "joao@empresa.com",
-  phone: "11999998888",
-  cpfcnpj: "12345678000190",
-  isContractor: true,
-  status: true,
-  ban: false,
-  endRegister: true,
-  rating: 4.8,
-  city: "São Paulo",
-  state: "SP",
-  address: "Rua Augusta, 100",
-  cep: "01001-000",
-  chave_pix: "joao@empresa.com",
-  type_company: "Construção",
-  bio: "Empresa de construção civil com 10 anos de experiência.",
-  created_at: "2025-01-15T10:00:00Z",
-  updated_at: null,
-  push: null,
-  photo_url: null,
-  name_contractor: "Silva Ltda",
-  latLng: null,
-  place_name: null,
-  app: "empresa",
-  fcm_token: null,
-};
-
-const MOCK_USER_SERVICES = [
-  {
-    id: "1",
-    name: "Eletricista residencial",
-    condition: "Opened",
-    created_at: "2025-05-20T10:00:00Z",
-  },
-  {
-    id: "2",
-    name: "Pintura comercial",
-    condition: "Finished",
-    created_at: "2025-04-15T14:00:00Z",
-  },
-];
-
-const MOCK_SUBSCRIPTION = {
-  plan_name: "Pro Mensal",
-  status: "active",
-  credits_remaining: 23,
-  credits_granted: 50,
-  period_start: "2025-05-01T00:00:00Z",
-  period_end: "2025-06-01T00:00:00Z",
-};
 
 const MOCK_TIMELINE = [
   {
@@ -79,51 +27,49 @@ const MOCK_TIMELINE = [
 
 // ─── Data fetchers ─────────────────────────────────────────────────────────────
 
-async function getUser(id: string): Promise<User> {
-  try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-    return data ?? MOCK_USER;
-  } catch {
-    return MOCK_USER;
-  }
+async function getUser(id: string): Promise<User | null> {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("rp_users").select("*").eq("id", id).maybeSingle();
+  return data;
 }
 
 async function getUserServices(userId: string) {
-  try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("services")
-      .select("id, name, condition, created_at")
-      .eq("userId", userId)
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return data?.length ? data : MOCK_USER_SERVICES;
-  } catch {
-    return MOCK_USER_SERVICES;
-  }
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("rp_services")
+    .select("id, title, condition, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  return data ?? [];
 }
 
 async function getUserSubscription(userId: string) {
-  try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("plan_name, status, credits_remaining, credits_granted, period_start, period_end")
+  const supabase = createAdminClient();
+  const [{ data: sub }, { data: balance }] = await Promise.all([
+    supabase
+      .from("rp_subscriptions")
+      .select("status, current_period_start, current_period_end, rp_subscription_plans(name)")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(1)
-      .maybeSingle();
-    if (error) throw error;
-    return data ?? MOCK_SUBSCRIPTION;
-  } catch {
-    return MOCK_SUBSCRIPTION;
-  }
+      .maybeSingle(),
+    supabase
+      .from("rp_credit_balances")
+      .select("credits_granted, credits_remaining")
+      .eq("user_id", userId)
+      .order("period_start", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (!sub) return null;
+  return {
+    plan_name: sub.rp_subscription_plans?.name ?? "—",
+    status: sub.status,
+    credits_remaining: balance?.credits_remaining ?? 0,
+    credits_granted: balance?.credits_granted ?? 0,
+    period_start: sub.current_period_start,
+    period_end: sub.current_period_end,
+  };
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -141,12 +87,14 @@ export default async function UsuarioDetailPage({
     getUserSubscription(id),
   ]);
 
+  if (!user) notFound();
+
   const isBanned = user.ban === true;
   const isActive = user.status === true;
 
   return (
     <DetailPanel
-      title={user.display_name ?? "Usuário"}
+      title={user.name || "Usuário"}
       subtitle={user.email ?? undefined}
       backHref="/usuarios"
       actions={

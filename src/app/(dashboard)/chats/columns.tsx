@@ -10,10 +10,11 @@ export const columns: ColumnDef<ChatWithRelations>[] = [
   {
     id: "participantes",
     header: "Participantes",
+    accessorFn: (c) => `${c.userA?.name ?? ""} ${c.userA?.email ?? ""} ${c.userB?.name ?? ""} ${c.userB?.email ?? ""}`,
     cell: ({ row }) => {
       const { userA, userB } = row.original;
-      const a = userA?.display_name ?? userA?.email ?? "—";
-      const b = userB?.display_name ?? userB?.email ?? "—";
+      const a = userA?.name || userA?.email || "—";
+      const b = userB?.name || userB?.email || "—";
       return (
         <Link href={`/chats/${row.original.id}`} className="hover:underline font-medium">
           {a} ↔ {b}
@@ -25,37 +26,28 @@ export const columns: ColumnDef<ChatWithRelations>[] = [
     id: "vinculado",
     header: "Vinculado",
     cell: ({ row }) => {
-      if (row.original.serviceId && row.original.services) {
+      if (row.original.service_id && row.original.services) {
         return (
           <Link
-            href={`/servicos/${row.original.serviceId}`}
+            href={`/servicos/${row.original.service_id}`}
             className="text-primary hover:underline text-sm"
           >
-            Serviço: {row.original.services.name ?? row.original.serviceId}
+            Serviço: {row.original.services.title || row.original.service_id}
           </Link>
         );
       }
-      if (row.original.leadId) {
+      if (row.original.lead_id) {
         return (
           <Link
-            href={`/leads/${row.original.leadId}`}
+            href={`/leads/${row.original.lead_id}`}
             className="text-primary hover:underline text-sm"
           >
-            Lead #{row.original.leadId.slice(0, 8)}
+            Lead #{row.original.lead_id.slice(0, 8)}
           </Link>
         );
       }
       return <span className="text-muted-foreground text-sm">—</span>;
     },
-  },
-  {
-    accessorKey: "last_message",
-    header: "Última Mensagem",
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
-        {row.original.last_message ?? "—"}
-      </span>
-    ),
   },
   {
     accessorKey: "last_message_at",
