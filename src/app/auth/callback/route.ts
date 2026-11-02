@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams, origin: internalOrigin } = new URL(request.url);
+  // Behind Coolify's proxy request.url is the container's localhost:3000; use the forwarded host.
+  const host = request.headers.get("x-forwarded-host");
+  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  const origin = host ? `${proto}://${host}` : internalOrigin;
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/";
 
